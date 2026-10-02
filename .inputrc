@@ -1,0 +1,11 @@
+# Show all if ambiguous, then cycle
+set show-all-if-ambiguous on
+set menu-complete-display-prefix on
+TAB: menu-complete
+
+
+# Use Up/Down arrows to search through history based on what you've already typed
+# Add this to ~/.inputrc
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+

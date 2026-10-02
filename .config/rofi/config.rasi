@@ -1,0 +1,81 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* See COPYING.md in the repository root for the license text. */
+* {
+    bg: #1c1c1c;
+    fg: #00AF60;
+    accent: #303030;
+    font: "JetBrainsMono Nerd Font 10";
+    background-color: @bg;
+    text-color: @fg;
+}
+
+window {
+    padding: 3% 25% 3% 1.5%;
+    border: 2px;
+    border-color: @fg;
+    border-radius: 30px;
+    background-color: @bg; 
+    width: 50%;
+    height: 55%;
+    background-image:            url("~/.config/rofi/sukubg.png", height);
+}
+
+mainbox {
+    spacing: 15px;
+    padding: 1%;
+    border-color: @fg;
+    background-color: @accent; 
+    border-radius: 20px;
+    border: 0px;
+}
+
+configuration {
+    show-icons: true;
+}
+listview {
+    background-color: @accent;
+    spacing: 2px;
+}
+
+element {
+    background-color: @accent;
+    text-color: #ffffff;
+    padding: 10px;
+    border-radius: 10px;
+    spacing: 10px;
+}
+
+element selected {
+    background-color: @bg; 
+    text-color: @fg;
+}
+
+element-text, element-icon {
+    background-color: inherit;
+    text-color: inherit;
+}
+
+inputbar {
+    spacing:          15px;
+    padding:          5px;
+    background-color: @bg;
+    border-radius:    20px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    background-color: @fg;
+    text-color:       @bg;
+    padding:          10px 15px;
+    border-radius:    15px;
+    font:             "JetBrainsMono Nerd Font Bold 12";
+}
+
+entry {
+    background-color:  transparent;
+    text-color:        @fg;
+    placeholder-color: @accent;
+    placeholder:       "Search...";
+    padding:           10px 0px;
+    blink:             true;
+}
