@@ -31,3 +31,6 @@ export NVM_DIR="$HOME/.nvm"
 
 export PATH="$HOME/.local/opt/ast-grep:$PATH"
 . "$HOME/.cargo/env"
+
+alias uud="sudo apt update"
+alias uug="sudo apt upgrade"
