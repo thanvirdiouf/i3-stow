@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# Launch the installed Pi with the old-terminal keyboard compatibility fix.
+launcher_path=$(readlink -f -- "${BASH_SOURCE[0]}")
+compat_path="${launcher_path%/*}/../lib/pi/keyboard-compat.cjs"
+
+# Keep stdin connected to the terminal; Pi also accepts piped prompts.
+while IFS= read -r pi_path <&3; do
+  [[ "$pi_path" -ef "$launcher_path" ]] && continue
+  exec node --require "$compat_path" "$pi_path" "$@" 3<&-
+done 3< <(type -a -p pi)
+
+printf 'pi: no installed Pi executable found on PATH\n' >&2
+exit 127

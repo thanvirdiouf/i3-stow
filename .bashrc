@@ -34,3 +34,9 @@ export PATH="$HOME/.local/opt/ast-grep:$PATH"
 
 alias uud="sudo apt update"
 alias uug="sudo apt upgrade"
+
+# Pi
+export PATH="$HOME/.local/bin:$PATH"
+
+# Local Laya System-One server for Pi Jev-compatible decisions
+export PI_JEV_BASE_URL=http://127.0.0.1:8000

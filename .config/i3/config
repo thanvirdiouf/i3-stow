@@ -23,6 +23,9 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 # Using exec_always ensures the wallpaper is set even when you reload i3
 exec_always --no-startup-id feh --bg-fill ~/.config/i3/wall.jpg
 
+# Start Polybar once per i3 session; watch its config for changes.
+exec --no-startup-id polybar --reload --config="$HOME/.config/polybar/config.ini" example
+
 # NetworkManager is the most popular way to manage wireless networks on Linux,
 # and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
@@ -44,6 +47,9 @@ bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl --class=backlig
 
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
+
+# Open these apps as floating windows with fullscreen disabled.
+for_window [class="(?i)^(localsend(_app)?|org[.]localsend[.]localsend_app|gedit|org[.]gnome[.]gedit|blueman-manager|kdeconnect([._-].*)?|org[.]kde[.]kdeconnect([.-].*)?)$"] fullscreen disable, floating enable
 
 # move tiling windows via drag & drop by left-clicking into the title bar,
 # or left-clicking anywhere into the window while holding the floating modifier.
@@ -201,3 +207,5 @@ bindsym $mod+r mode "resize"
 
 gaps outer 1
 gaps inner 10
+# Reserve space for the unmanaged Polybar (42 px tall at 96 DPI).
+gaps top 38
