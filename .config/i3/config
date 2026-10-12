@@ -14,6 +14,11 @@ font pango:monospace 8
 # https://wiki.archlinux.org/index.php/XDG_Autostart
 exec --no-startup-id dex --autostart --environment i3
 
+# Dwindle: split the focused tile along its longer edge for the next window.
+# The helper holds a lock so reloads/restarts cannot create duplicate listeners.
+exec_always --no-startup-id python3 "$HOME/.config/i3/dwindle.py"
+bindsym $mod+Shift+d exec --no-startup-id i3-msg -t send_tick dwindle-toggle
+
 # The combination of xss-lock, nm-applet and pactl is a popular choice, so
 # they are included here as an example. Modify as you see fit.
 

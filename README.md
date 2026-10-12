@@ -98,6 +98,18 @@ fc-cache -f
 Font licenses are included alongside the font files. Bundled ast-grep binaries
 must be compatible with the target machine's operating system and architecture.
 
+### i3 dwindle layout
+
+The i3 config starts `.config/i3/dwindle.py` automatically (Python 3, no extra
+packages). New tiled windows divide the focused tile along its longer edge,
+creating nested splits. Existing windows are not rearranged. Floating windows,
+fullscreen containers, and tabbed/stacked layouts are left alone.
+
+Press **Super+Shift+D** to toggle automatic splitting for the current session.
+Normal focus, move, and resize shortcuts still work. To disable it permanently,
+remove the helper's `exec_always` line and its toggle binding from the i3 config,
+then stop the running helper and reload i3. Reloads cannot start duplicate helpers.
+
 ## Maintaining the links
 
 Edit configurations inside `~/.dotfiles`, then review and commit the changes
