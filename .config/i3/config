@@ -24,7 +24,10 @@ bindsym $mod+Shift+d exec --no-startup-id i3-msg -t send_tick dwindle-toggle
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
-exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
+# Simple dark lock screen, with the default password indicator.
+set $lock_color 1e1e2e
+exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork --color=$lock_color
+bindsym $mod+l exec --no-startup-id i3lock --color=$lock_color
 # Using exec_always ensures the wallpaper is set even when you reload i3
 exec_always --no-startup-id feh --bg-fill ~/.config/i3/wall.jpg
 
@@ -79,7 +82,7 @@ bindsym $mod+BackSpace exec --no-startup-id ~/.config/rofi/greenpower.sh
 # change focus
 bindsym $mod+j focus left
 bindsym $mod+k focus down
-bindsym $mod+l focus up
+bindsym $mod+u focus up
 bindsym $mod+semicolon focus right
 
 # alternatively, you can use the cursor keys:
