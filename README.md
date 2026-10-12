@@ -18,8 +18,9 @@ pointing to the files here, so edits stay in one place.
 │   ├── i3                      # Window manager configuration and wallpaper
 │   ├── kitty                   # Terminal configuration and theme
 │   ├── mpv                     # Media player keybindings
-│   ├── nvim                    # Neovim configuration (embedded Git repository)
+│   ├── nvim                    # Neovim / LazyVim configuration
 │   ├── picom                   # Compositor configuration
+│   ├── polybar                 # Status bar and external-monitor brightness script
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
 └── .local
@@ -43,11 +44,114 @@ git clone <repository-url> "$HOME/.dotfiles"
 cd "$HOME/.dotfiles"
 ```
 
-Install the applications whose configurations you want to use separately.
 Stow links files; it does not install applications or their dependencies.
-Review the configs for machine-specific commands and paths before using them.
-For example, `.bashrc` sources `~/.cargo/env` and optionally loads NVM,
-Starship, and eza; the i3 config starts several desktop utilities.
+
+### Package dependencies (APT)
+
+The following list covers the active configurations and scripts in this
+repository. Package names are for Debian/Ubuntu-based distributions; they were
+checked against this machine's Linux Mint 22.3 / Ubuntu 24.04 APT indexes.
+APT installs the packages' library dependencies automatically.
+
+| Packages | Used by / purpose |
+| --- | --- |
+| `git`, `stow` | Clone the repository, link dotfiles, and download Neovim plugins. |
+| `xserver-xorg`, `dbus-x11` | X11 desktop session and D-Bus support. |
+| `i3-wm` | Window manager; also supplies `i3-msg` and `i3-nagbar`. |
+| `polybar` | Workspace, clock, audio, brightness, and system-tray bar. |
+| `rofi` | Application launcher and `greenpower.sh` power menu. |
+| `picom` | Compositor configured in `.config/picom/picom.conf`. |
+| `kitty`, `thunar`, `mpv` | Terminal and file-manager shortcuts; configured media player. |
+| `dex` | Starts XDG autostart applications when i3 starts. |
+| `xss-lock`, `i3lock` | Screen locking, including before suspend. |
+| `feh` | Sets the i3 wallpaper. |
+| `network-manager`, `network-manager-gnome` | Network service and `nm-applet` system-tray applet. |
+| `kdeconnect` | `kdeconnect-indicator` autostart and device integration. |
+| `policykit-1-gnome` | Authentication agent explicitly started by i3. |
+| `pulseaudio-utils`, `pavucontrol` | `pactl` volume/microphone shortcuts and Polybar's audio settings menu. |
+| `brightnessctl` | Backlight brightness keys. |
+| `ddcutil` | External-monitor brightness polling and scrolling in Polybar. |
+| `xdg-desktop-portal`, `xdg-desktop-portal-gtk`, `gnome-keyring` | GTK desktop portals and the configured keyring secret portal. |
+| `fontconfig` | Discovers the bundled Nerd Fonts and supplies `fc-cache`. |
+| `python3` | Both i3 helpers; they use only Python's standard library. |
+| `bash`, `coreutils`, `grep`, `mawk`, `util-linux`, `systemd` | Shell/scripts, `readlink`, `sleep`, `awk`, `flock`, `systemctl`, and `loginctl`; normally already installed. |
+| `psmisc`, `i3status` | `killall` and the legacy i3status refresh command still used by the audio bindings; the visible bar is Polybar. |
+| `neovim`, `fd-find`, `ripgrep` | Editor, explicitly configured `fdfind` file picker, and plugin text searches. |
+| `tree-sitter-cli`, `build-essential` | Tree-sitter CLI and C compiler for Neovim syntax parsers. |
+| `curl`, `ca-certificates`, `tar`, `gzip`, `unzip` | Download and extract Neovim plugin/tool assets. |
+| `python3-venv` | Creates the Python provider environment configured for Neovim. |
+
+Install the desktop applications and editor prerequisites:
+
+```sh
+sudo apt update
+sudo apt install \
+  git stow xserver-xorg dbus-x11 \
+  i3-wm i3status polybar rofi picom kitty thunar mpv \
+  dex xss-lock i3lock feh network-manager network-manager-gnome \
+  kdeconnect policykit-1-gnome pulseaudio-utils pavucontrol \
+  brightnessctl ddcutil xdg-desktop-portal xdg-desktop-portal-gtk \
+  gnome-keyring fontconfig python3 bash coreutils grep mawk util-linux \
+  systemd psmisc neovim fd-find ripgrep tree-sitter-cli build-essential \
+  curl ca-certificates tar gzip unzip python3-venv
+```
+
+Version requirements matter: the gaps configuration needs
+[i3 4.22 or later](https://i3wm.org/docs/userguide.html#gaps), and `internal/tray`
+needs [Polybar 3.7 or later](https://polybar.github.io/2023/11/05/Release-3.7.0.html).
+The pinned [nvim-treesitter revision](https://github.com/nvim-treesitter/nvim-treesitter/blob/e289100ff98969e118c702199d88b764ce9e7fdf/README.md#requirements)
+requires Neovim **0.12.0+** and tree-sitter CLI **0.26.1+**. Ubuntu 24.04's stock
+`neovim` (0.9.5) and `tree-sitter-cli` (0.20.8) are too old; obtain compatible
+versions separately if your APT repositories do not provide them. Installing
+the command above alone does not satisfy these editor version requirements.
+
+### Additional setup and optional tools
+
+- **Audio server:** Polybar and `pactl` need a running PulseAudio-compatible
+  server. Keep the existing desktop audio service. If none is installed, use
+  `sudo apt install pipewire-pulse wireplumber` for PipeWire, or
+  `sudo apt install pulseaudio` for PulseAudio, choosing one setup.
+- **Helium:** `Super+B` executes `helium`. Install that browser separately and
+  ensure its executable is on `PATH`, or change the binding to your browser.
+  There is no `helium` package in this machine's configured APT indexes.
+- **Rust environment:** `.bashrc` unconditionally sources `~/.cargo/env`.
+  Install the Rust toolchain through rustup to create it, or guard/remove that
+  line if you do not use Rust. Adding a directory to `PATH` does not install it.
+- **Shell enhancements:** `eza` and `starship` are optional and checked before
+  use. Install them if desired; `eza` is available from this machine's Ubuntu
+  indexes, while Starship may need a separate upstream installation.
+- **Other GUI apps:** `gedit`, `blueman` (`blueman-manager`), and LocalSend are
+  mentioned only in i3 floating-window rules. They are optional and are not
+  launched by the config. Gedit and Blueman can be installed with
+  `sudo apt install gedit blueman`; obtain LocalSend separately if needed.
+- **Session utilities:** `xinit` is optional if you start X11 with `startx`
+  instead of a display manager. `libpam-gnome-keyring` is optional for keyring
+  unlocking at login; `tree` is used by the maintenance example below.
+- **Compositor startup:** i3 does not explicitly launch Picom. Start `picom`
+  through your session's autostart mechanism to apply its configured effects.
+- **Monitor access:** `.config/polybar/monitor-brightness.sh` hardcodes I2C bus
+  `3`. Adjust it for your display, enable DDC/CI on the monitor, and ensure your
+  user can access the appropriate `/dev/i2c-*` device (with `i2c-dev` loaded).
+- **Authentication agent:** check the hardcoded
+  `/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1` path if using
+  a different distribution or authentication-agent package.
+
+### pip packages
+
+Neovim's Python provider points to a virtual environment outside the tracked
+configuration. Create it and install `pynvim` before using Python-dependent
+plugins. The `python3-venv` APT package above supplies pip inside the environment:
+
+```sh
+python3 -m venv "$HOME/.local/share/nvim/venv"
+"$HOME/.local/share/nvim/venv/bin/python" -m pip install pynvim
+```
+
+Lazy.nvim downloads the Lua plugins on first launch; Mason manages configured
+language servers and formatters. Their runtime dependencies depend on the tools
+you enable. `.config/nvim/lua/plugins/example.lua` returns an empty spec, so its
+example Pyright, TypeScript, and linting tools are not active dependencies.
+Nerd Fonts and ast-grep executables are already bundled in this repository.
 
 ### Link the dotfiles
 
@@ -80,12 +184,11 @@ If Stow reports a conflict, inspect and back up the existing target file, then
 move it out of the way before retrying. Avoid using `--adopt` casually: it moves
 existing target files into this repository and can replace its configurations.
 
-### Neovim checkout
+### Neovim configuration
 
-`.config/nvim` is currently recorded as a Gitlink, but this repository has no
-`.gitmodules` file. A fresh clone therefore does not include the Neovim
-configuration automatically. Populate that directory from its own repository
-before linking it, or configure it as a proper submodule with a source URL.
+`.config/nvim` is tracked as regular files and is included in a fresh clone.
+Install the editor dependencies and compatible versions described above before
+starting Neovim.
 
 ### Fonts
 
