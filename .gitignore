@@ -1,1 +1,3 @@
 .local/share/nvim/venv/
+.local/bin/pmbootstrap
+

@@ -40,3 +40,4 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Local Laya System-One server for Pi Jev-compatible decisions
 export PI_JEV_BASE_URL=http://127.0.0.1:8000
+alias xxx='xrandr --output HDMI-1-0 --mode 1920x1080 --primary --output eDP-1 --off'
