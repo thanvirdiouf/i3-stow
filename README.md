@@ -65,6 +65,7 @@ APT installs the packages' library dependencies automatically.
 | `dex` | Starts XDG autostart applications when i3 starts. |
 | `xss-lock`, `i3lock` | Screen locking, including before suspend. |
 | `feh` | Sets the i3 wallpaper. |
+| `flameshot` | Full-desktop and selected-area screenshots, saved to disk and copied to the clipboard. |
 | `network-manager`, `network-manager-gnome` | Network service and `nm-applet` system-tray applet. |
 | `kdeconnect` | `kdeconnect-indicator` autostart and device integration. |
 | `policykit-1-gnome` | Authentication agent explicitly started by i3. |
@@ -88,7 +89,7 @@ sudo apt update
 sudo apt install \
   git stow xserver-xorg dbus-x11 \
   i3-wm i3status polybar rofi picom kitty thunar mpv \
-  dex xss-lock i3lock feh network-manager network-manager-gnome \
+  dex xss-lock i3lock feh flameshot network-manager network-manager-gnome \
   kdeconnect policykit-1-gnome pulseaudio-utils pavucontrol \
   brightnessctl ddcutil xdg-desktop-portal xdg-desktop-portal-gtk \
   gnome-keyring fontconfig python3 bash coreutils grep mawk util-linux \
@@ -200,6 +201,16 @@ fc-cache -f
 
 Font licenses are included alongside the font files. Bundled ast-grep binaries
 must be compatible with the target machine's operating system and architecture.
+
+### Screenshot shortcuts
+
+- **Print Screen:** capture the whole desktop (all monitors).
+- **Shift+Print Screen:** drag to select an area; capture completes when you
+  release the mouse. Press **Escape** to cancel.
+
+Both shortcuts save PNG images to `~/Pictures/Screenshots` (created automatically)
+and copy the image to the clipboard. They use Flameshot. After changing the i3
+configuration, press **Super+Shift+C** to reload it.
 
 ### i3 dwindle layout
 

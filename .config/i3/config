@@ -53,6 +53,11 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl --class=backlight --min-value=1 set +10%
 bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl --class=backlight --min-value=1 set 10%-
 
+# Screenshots: save to Pictures/Screenshots and copy to the clipboard.
+# Run on release so Flameshot can grab the pointer for area selection.
+bindsym --release Print exec --no-startup-id mkdir -p "$HOME/Pictures/Screenshots" && flameshot full --clipboard --path "$HOME/Pictures/Screenshots"
+bindsym --release Shift+Print exec --no-startup-id mkdir -p "$HOME/Pictures/Screenshots" && flameshot gui --accept-on-select --clipboard --path "$HOME/Pictures/Screenshots"
+
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
