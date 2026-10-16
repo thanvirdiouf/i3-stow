@@ -17,6 +17,8 @@ PROMPT_COMMAND="history -a; history -n${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 # Aliases
 alias grep='grep --color=auto'
 command -v eza >/dev/null 2>&1 && alias ls='eza'
+alias fanmax='sudo nbfc set --speed 100'
+alias fanauto='sudo nbfc set --auto'
 
 # Prompt — pick ONE
 if command -v starship >/dev/null 2>&1; then
