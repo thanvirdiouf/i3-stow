@@ -12,16 +12,16 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 
 ![Polybar close-up showing workspace buttons, clock, audio, battery, brightness, and tray](docs/screenshots/polybar.png)
 
-<details>
-<summary>More previews: tiling, launcher, and power menu</summary>
-
-**Dwindle tiling**
-
-![Three kitty windows arranged by i3's dwindle autotiling](docs/screenshots/tiling.png)
+## Rofi
 
 | Application launcher | Power menu |
 | --- | --- |
 | ![Rofi application launcher with Dracula colors](docs/screenshots/rofi-launcher.png) | ![Rofi power menu with Dracula colors](docs/screenshots/rofi-power-menu.png) |
+
+<details>
+<summary>Dwindle tiling preview</summary>
+
+![Three kitty windows arranged by i3's dwindle autotiling](docs/screenshots/tiling.png)
 
 </details>
 
