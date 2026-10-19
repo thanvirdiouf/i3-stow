@@ -6,6 +6,15 @@ set $mod Mod4
 
 font pango:monospace 8
 
+# Dracula purple borders, with darker purple on unfocused windows.
+default_border pixel 3
+default_floating_border pixel 3
+for_window [all] border pixel 3
+# class                 border  background text    indicator child_border
+client.focused          #bd93f9 #282a36    #f8f8f2 #bd93f9   #bd93f9
+client.focused_inactive #694b8a #282a36    #f8f8f2 #694b8a   #694b8a
+client.unfocused        #694b8a #282a36    #f8f8f2 #694b8a   #694b8a
+
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
 #font pango:DejaVu Sans Mono 8
