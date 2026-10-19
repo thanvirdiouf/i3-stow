@@ -1,12 +1,33 @@
 # Dotfiles
 
-[![GNU GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)](COPYING.md)
-
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
 Personal Linux dotfiles managed with GNU Stow. This repository lives at
 `~/.dotfiles` and mirrors the home directory: Stow creates symlinks in `~`
 pointing to the files here, so edits stay in one place.
+
+## Screenshots
+
+### Desktop
+
+i3 and Polybar with Dracula purple borders, rounded inner and outer edges,
+and a translucent kitty window with Picom blur and shadows.
+
+![i3 desktop with Polybar, purple rounded borders, and a translucent kitty terminal](docs/screenshots/desktop.png)
+
+### Application launcher
+
+Rofi's existing layout and illustrated background with the Dracula palette.
+Open it with **Super+A**.
+
+![Rofi application launcher with a dark Dracula palette and purple selection](docs/screenshots/rofi-launcher.png)
+
+### Power menu
+
+The matching power menu opens with **Super+Backspace** and asks for confirmation
+before performing an action.
+
+![Rofi power menu with Power Off, Reboot, Suspend, and Log Out options](docs/screenshots/rofi-power-menu.png)
 
 ## Contents
 
@@ -23,6 +44,7 @@ pointing to the files here, so edits stay in one place.
 │   ├── polybar                 # Status bar and external-monitor brightness script
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
+├── docs/screenshots            # Desktop, launcher, and power-menu previews
 └── .local
     ├── bin                     # Local executable directory
     ├── opt/ast-grep             # Bundled ast-grep executables
@@ -164,6 +186,7 @@ cd "$HOME/.dotfiles"
 stow --simulate --verbose --no-folding --target="$HOME" \
   --ignore='(^|/)(\.git|\.gitignore|\.agents|\.aws|\.codex)(/|$)' \
   --ignore='(^|/)(README|COPYING)\.md$' \
+  --ignore='^docs(/|$)' \
   --ignore='^\.local/share/nvim(/|$)' .
 ```
 
@@ -173,6 +196,7 @@ If the preview looks correct, apply it:
 stow --verbose --no-folding --target="$HOME" \
   --ignore='(^|/)(\.git|\.gitignore|\.agents|\.aws|\.codex)(/|$)' \
   --ignore='(^|/)(README|COPYING)\.md$' \
+  --ignore='^docs(/|$)' \
   --ignore='^\.local/share/nvim(/|$)' .
 ```
 
@@ -247,6 +271,8 @@ Keep credentials and machine-specific secrets out of Git. The local `.aws`,
 `.agents`, and `.codex` directories are excluded from the linking commands above.
 
 ## License
+
+[![GNU GPLv3](https://www.gnu.org/graphics/gplv3-127x51.png)](COPYING.md)
 
 Original code, configuration, and documentation in this repository are licensed
 under the GNU General Public License, version 3 or (at your option) any later

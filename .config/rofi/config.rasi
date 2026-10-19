@@ -6,6 +6,16 @@
     accent: #44475a;
     purple: #bd93f9;
     muted: #6272a4;
+    /* Recolor the default theme's more specific row-state selectors, too. */
+    background: @bg;
+    foreground: @fg;
+    lightbg: @accent;
+    lightfg: @purple;
+    blue: @purple;
+    red: #ff5555;
+    normal-background: @accent;
+    selected-normal-foreground: @bg;
+    separatorcolor: @muted;
     font: "JetBrainsMono Nerd Font 10";
     background-color: @bg;
     text-color: @fg;
