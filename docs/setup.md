@@ -111,6 +111,8 @@ the command above alone does not satisfy these editor version requirements.
   `sudo apt install pulseaudio` for PulseAudio, choosing one setup.
 - **Helium:** `Super+B` executes `helium`. Install that browser separately and
   ensure its executable is on `PATH`, or change the binding to your browser.
+  The keybinding and local `helium.desktop` entry disable startup notifications
+  so launches from i3 and Rofi open on the current workspace.
   There is no `helium` package in this machine's configured APT indexes.
 - **Rust environment:** `.bashrc` unconditionally sources `~/.cargo/env`.
   Install the Rust toolchain through rustup to create it, or guard/remove that

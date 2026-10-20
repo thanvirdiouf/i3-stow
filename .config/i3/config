@@ -80,7 +80,8 @@ tiling_drag modifier titlebar
 # start a terminal
 bindsym $mod+Return exec kitty
 bindsym $mod+e exec thunar
-bindsym $mod+b exec helium
+# Disable startup tracking so Helium opens on the current workspace.
+bindsym $mod+b exec --no-startup-id helium
 # kill focused window
 bindsym $mod+q kill
 
