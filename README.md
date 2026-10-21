@@ -25,10 +25,18 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 
 </details>
 
+<details>
+<summary>Animated lockscreen preview</summary>
+
+![Purple lock emblem rendered by Picom; the emblem rotates while locked](docs/screenshots/lockscreen.png)
+
+</details>
+
 ## What's included
 
 - **i3:** dwindle autotiling, gaps, and rounded purple borders.
 - **Picom + kitty:** blur, shadows, and Catppuccin Mocha terminal colors.
+- **Lockscreen:** an animated purple lock emblem with i3lock password feedback.
 - **Rofi:** Dracula launcher and a power menu with confirmation prompts.
 - **Polybar:** a compact bar with audio and brightness controls.
 
