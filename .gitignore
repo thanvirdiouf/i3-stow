@@ -1,3 +1,8 @@
 .local/share/nvim/venv/
 .local/bin/pmbootstrap
 
+# Local Android tooling
+/.local/bin/android-emulator
+/.local/bin/android-studio
+/.local/opt/android-studio/
+
