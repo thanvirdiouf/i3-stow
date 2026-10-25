@@ -143,6 +143,10 @@ The default session uses Quickshell. The config in `.config/quickshell`
 was tested with **Quickshell 0.3.2** under i3/X11 using `nixGL quickshell`.
 It uses the same Dracula colors as i3/Rofi, rounded surfaces, and the bundled
 JetBrains Mono Nerd Font. Edit `Theme.qml` for colors, sizing, and spacing.
+The Qt cursor uses **Bibata-Modern-Ice**, matching GTK. Install that cursor theme
+under `/usr/share/icons` or `/usr/local/share/icons`, or adjust the `XCURSOR_THEME`
+and `XCURSOR_PATH` pragmas at the top of `shell.qml`. Cursor changes require a
+Quickshell restart; the hand pointer over clickable buttons is intentional.
 
 Install Quickshell and nixGL separately through your Nix setup. It also needs
 a running **PipeWire** service for audio controls, **UPower** (`upower`) for

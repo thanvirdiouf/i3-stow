@@ -74,7 +74,7 @@ bindsym --release Shift+Print exec --no-startup-id mkdir -p "$HOME/Pictures/Scre
 floating_modifier $mod
 
 # Open these apps as floating windows with fullscreen disabled.
-for_window [class="(?i)^(localsend(_app)?|org[.]localsend[.]localsend_app|gedit|org[.]gnome[.]gedit|blueman-manager|kdeconnect([._-].*)?|org[.]kde[.]kdeconnect([.-].*)?)$"] fullscreen disable, floating enable
+for_window [class="(?i)^(localsend(_app)?|org[.]localsend[.]localsend_app|gedit|org[.]gnome[.]gedit|blueman-manager|pavucontrol|kdeconnect([._-].*)?|org[.]kde[.]kdeconnect([.-].*)?)$"] fullscreen disable, floating enable
 
 # move tiling windows via drag & drop by left-clicking into the title bar,
 # or left-clicking anywhere into the window while holding the floating modifier.

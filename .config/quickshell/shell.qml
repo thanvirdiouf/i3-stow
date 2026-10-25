@@ -1,6 +1,8 @@
 //@ pragma UseQApplication
 //@ pragma IconTheme Adwaita
 //@ pragma ShellId spectre-dotfiles
+//@ pragma Env XCURSOR_THEME = Bibata-Modern-Ice
+//@ pragma Env XCURSOR_PATH = /usr/share/icons:/usr/local/share/icons
 // SPDX-License-Identifier: GPL-3.0-or-later
 // i3/X11 desktop bar. Run with: nixGL quickshell
 import QtQuick
@@ -253,7 +255,9 @@ ShellRoot {
                                     if (!modelData.hasMenu) {
                                         // XEmbed proxies open the original GTK/X11 menu via
                                         // ContextMenu, which Quickshell's display() doesn't call.
-                                        const point = mapToItem(panel.contentItem, width / 2, height);
+                                        // GTK/XTest requires the embedded window to be under
+                                        // the actual pointer, not below the tray button.
+                                        const point = mapToItem(panel.contentItem, mouse.x, mouse.y);
                                         const action = mouse.button === Qt.RightButton ? "ContextMenu"
                                             : mouse.button === Qt.MiddleButton ? "SecondaryActivate" : "Activate";
                                         Quickshell.execDetached(["python3", Quickshell.shellPath("tray-action.py"),
