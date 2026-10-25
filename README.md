@@ -6,11 +6,22 @@ My Linux/X11 desktop, built around i3 and managed with GNU Stow.
 
 ![i3 desktop with rounded purple borders and a translucent kitty terminal](docs/screenshots/desktop.png)
 
-## Polybar
+## Polybar fallback
 
 Workspaces, window title, clock, volume, battery, brightness, and system tray.
 
 ![Polybar close-up showing workspace buttons, clock, audio, battery, brightness, and tray](docs/screenshots/polybar.png)
+
+## Quickshell
+
+The default i3/X11 bar, with the desktop's Dracula purple, rounded corners, and
+JetBrains Mono Nerd Font. Includes ten workspace buttons, the focused window
+title, date/time, live PipeWire audio, battery, brightness, and a system tray.
+
+![Quickshell floating bar with purple workspace and clock accents](docs/screenshots/quickshell.png)
+
+Run with `nixGL quickshell`. See the [Quickshell setup notes](docs/setup.md#quickshell)
+for dependencies, the legacy tray bridge, and switching back to Polybar.
 
 ## Rofi
 
@@ -38,7 +49,8 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 - **Picom + kitty:** blur, shadows, and Catppuccin Mocha terminal colors.
 - **Lockscreen:** an animated purple lock emblem with i3lock password feedback.
 - **Rofi:** Dracula launcher and a power menu with confirmation prompts.
-- **Polybar:** a compact bar with audio and brightness controls.
+- **Polybar:** a fallback bar with audio and brightness controls.
+- **Quickshell:** a floating bar with a purple border, matching i3 and Rofi's Dracula palette.
 
 Neovim/LazyVim, Bash, mpv, and desktop-portal settings are also included.
 

@@ -17,6 +17,7 @@
 │   ├── nvim                    # Neovim / LazyVim configuration
 │   ├── picom                   # Compositor configuration
 │   ├── polybar                 # Status bar and external-monitor brightness script
+│   ├── quickshell              # Default Dracula bar and legacy tray bridge for i3/X11
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
 ├── docs                        # Setup guide and screenshots
@@ -55,7 +56,7 @@ APT installs the packages' library dependencies automatically.
 | `git`, `stow` | Clone the repository, link dotfiles, and download Neovim plugins. |
 | `xserver-xorg`, `dbus-x11` | X11 desktop session and D-Bus support. |
 | `i3-wm` | Window manager; also supplies `i3-msg` and `i3-nagbar`. |
-| `polybar` | Workspace, clock, audio, brightness, and system-tray bar. |
+| `polybar` | Optional fallback bar. |
 | `rofi` | Application launcher and `greenpower.sh` power menu. |
 | `picom` | Compositor configured in `.config/picom/picom.conf`. |
 | `kitty`, `thunar`, `mpv` | Terminal and file-manager shortcuts; configured media player. |
@@ -66,14 +67,14 @@ APT installs the packages' library dependencies automatically.
 | `network-manager`, `network-manager-gnome` | Network service and `nm-applet` system-tray applet. |
 | `kdeconnect` | `kdeconnect-indicator` autostart and device integration. |
 | `policykit-1-gnome` | Authentication agent explicitly started by i3. |
-| `pulseaudio-utils`, `pavucontrol` | `pactl` volume/microphone shortcuts and Polybar's audio settings menu. |
+| `pulseaudio-utils`, `pavucontrol` | `pactl` volume/microphone shortcuts and the bar's audio settings menu. |
 | `brightnessctl` | Backlight brightness keys. |
-| `ddcutil` | External-monitor brightness polling and scrolling in Polybar. |
+| `ddcutil` | External-monitor brightness polling and scrolling in both bars. |
 | `xdg-desktop-portal`, `xdg-desktop-portal-gtk`, `gnome-keyring` | GTK desktop portals and the configured keyring secret portal. |
 | `fontconfig` | Discovers the bundled Nerd Fonts and supplies `fc-cache`. |
 | `python3` | Both i3 helpers; they use only Python's standard library. |
 | `bash`, `coreutils`, `grep`, `mawk`, `util-linux`, `systemd` | Shell/scripts, `readlink`, `sleep`, `awk`, `flock`, `systemctl`, and `loginctl`; normally already installed. |
-| `psmisc`, `i3status` | `killall` and the legacy i3status refresh command still used by the audio bindings; the visible bar is Polybar. |
+| `psmisc`, `i3status` | `killall` and the legacy i3status refresh command still used by the audio bindings. |
 | `neovim`, `fd-find`, `ripgrep` | Editor, explicitly configured `fdfind` file picker, and plugin text searches. |
 | `tree-sitter-cli`, `build-essential` | Tree-sitter CLI and C compiler for Neovim syntax parsers. |
 | `curl`, `ca-certificates`, `tar`, `gzip`, `unzip` | Download and extract Neovim plugin/tool assets. |
@@ -135,6 +136,96 @@ the command above alone does not satisfy these editor version requirements.
 - **Authentication agent:** check the hardcoded
   `/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1` path if using
   a different distribution or authentication-agent package.
+
+### Quickshell
+
+The default session uses Quickshell. The config in `.config/quickshell`
+was tested with **Quickshell 0.3.2** under i3/X11 using `nixGL quickshell`.
+It uses the same Dracula colors as i3/Rofi, rounded surfaces, and the bundled
+JetBrains Mono Nerd Font. Edit `Theme.qml` for colors, sizing, and spacing.
+
+Install Quickshell and nixGL separately through your Nix setup. It also needs
+a running **PipeWire** service for audio controls, **UPower** (`upower`) for
+battery status, and **Adwaita** (`adwaita-icon-theme`) for tray menu icons.
+It reuses the existing `i3-msg`, `rofi`, `pavucontrol`, `brightnessctl`, and
+`ddcutil` dependencies. Battery status is hidden when no battery is present;
+unavailable audio or brightness shows a dash.
+
+After Stow has linked the config, start it in a terminal:
+
+```sh
+polybar-msg cmd quit # Only needed if Polybar is currently running.
+i3-msg 'gaps top all set 0'
+nixGL quickshell --no-duplicate
+```
+
+Quickshell starts automatically at the next login. Its dock reserves its own
+height, including the transparent margins, so keep `gaps top 0` in i3. The normal
+10 px inner gap remains between the dock and tiled windows. The Picom config
+excludes this dock from effects that would fill or shadow its transparent
+margins. Reload Picom after linking an updated compositor config.
+
+For the Polybar fallback, stop Quickshell, swap the commented startup lines in
+`.config/i3/config`, and change `gaps top 0` to `gaps top 38`. For the current
+session:
+
+```sh
+nixGL quickshell kill
+i3-msg 'gaps top all set 38'
+polybar --reload --config="$HOME/.config/polybar/config.ini" example
+```
+
+| Control | Action |
+| --- | --- |
+| Launcher icon | Open the existing Rofi application launcher. |
+| Workspace number | Switch workspace; scrolling cycles workspaces on the focused output. |
+| Clock | Toggle time/date; hover for the full date. |
+| Audio | Click to mute, scroll in 5% steps (capped at 100%), right-click for Pavucontrol. |
+| Brightness | Scroll in 5% steps; click to refresh the reading. |
+| Tray icon | Left/middle/right-click and scroll invoke the application's tray actions. |
+| Power icon | Open the existing Rofi power menu with its confirmation prompts. |
+
+The bar appears on each connected screen. Laptop panels use `brightnessctl`;
+external displays reuse `.config/polybar/monitor-brightness.sh`, including its
+machine-specific **I2C bus 3** setting and lock. Change that helper for a
+different monitor; multiple external displays need a helper per display.
+
+The tray supports **StatusNotifier/AppIndicator** applications directly and
+starts **xembedsniproxy** for legacy XEmbed icons, including `nm-applet`, the
+Intel/NVIDIA PRIME applet, and Mint's update/report icons. The bridge is owned
+by Quickshell and stops with it. Polybar must be stopped, not hidden, before
+starting the bridge: only one process can own the XEmbed tray selection.
+
+Use a distribution-provided `xembedsniproxy` / `xembed-sni-proxy` on `PATH`, or
+install the small user-local copy on Debian/Ubuntu/Mint:
+
+```sh
+bash "$HOME/.config/quickshell/install-tray-bridge.sh"
+```
+
+The installer downloads the configured APT repository's `plasma-workspace`
+package and extracts only its bridge binary and license into
+`~/.local/share/quickshell/xembed-sni-proxy/`. It does not install Plasma.
+It checks that the required runtime libraries are available; on this machine
+they were already installed. Package/version metadata is saved alongside the
+binary. Re-run the installer to update it. Missing libraries are listed rather
+than installed automatically.
+
+The launcher keeps the system Qt 5 bridge's library/plugin paths separate from
+Nix's Qt 6 Quickshell runtime. `tray-action.py` uses Python's standard library
+and `busctl` to forward legacy clicks at the icon's screen position, including
+native right-click menus which do not expose a DBusMenu handle. Existing applet
+startup commands can remain unchanged.
+
+Quickshell reloads saved QML changes automatically. To run from the repository
+before linking it with Stow, use:
+
+```sh
+nixGL quickshell --path "$HOME/.dotfiles/.config/quickshell" --no-duplicate
+```
+
+See the [Quickshell type reference](https://quickshell.org/docs/v0.3.2/types/)
+for the native i3, PipeWire, UPower, and tray APIs.
 
 ### pip packages
 
