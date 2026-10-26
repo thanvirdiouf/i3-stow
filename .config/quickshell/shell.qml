@@ -24,35 +24,18 @@ ShellRoot {
     readonly property bool batteryPresent: battery.isPresent && battery.ready
     readonly property int charge: Math.round(battery.percentage * 100)
 
-    Launcher { id: appLauncher }
     ResourceMonitor { id: systemMonitor }
-    Process {
-        id: lockArtwork
-        command: ["python3", Quickshell.shellPath("lock-screen.py"), "--update-cache"]
-        running: true
-        stderr: StdioCollector {}
-    }
-    Timer {
-        interval: 60000
-        running: true
-        repeat: true
-        onTriggered: { if (!lockArtwork.running) lockArtwork.running = true; }
-    }
-    Connections {
-        target: Quickshell
-        function onScreensChanged() { if (!lockArtwork.running) lockArtwork.running = true; }
-    }
     IpcHandler {
         target: "desktop"
         function launcher(): void {
-            if (appLauncher.visible) appLauncher.visible = false;
-            else { systemMonitor.visible = false; appLauncher.open(); }
+            systemMonitor.visible = false;
+            Quickshell.execDetached(["rofi", "-show", "drun"]);
         }
         function monitor(): void {
             if (systemMonitor.visible) systemMonitor.visible = false;
-            else { appLauncher.visible = false; systemMonitor.open(); }
+            else systemMonitor.open();
         }
-        function close(): void { appLauncher.visible = false; systemMonitor.visible = false; }
+        function close(): void { systemMonitor.visible = false; }
     }
 
     // Own the XEmbed bridge with the shell, so it also stops when the shell exits.
@@ -165,7 +148,7 @@ ShellRoot {
                         text: "󰀻"
                         foreground: Theme.purple
                         hint: "Applications · Super+A"
-                        onClicked: { systemMonitor.visible = false; appLauncher.open(); }
+                        onClicked: { systemMonitor.visible = false; Quickshell.execDetached(["rofi", "-show", "drun"]); }
                     }
                     Divider {
                         Layout.alignment: Qt.AlignVCenter
@@ -237,7 +220,7 @@ ShellRoot {
                         text: "󰍛"
                         foreground: Theme.purple
                         hint: "System monitor · Super+F12"
-                        onClicked: { appLauncher.visible = false; systemMonitor.visible = !systemMonitor.visible; }
+                        onClicked: systemMonitor.visible = !systemMonitor.visible
                     }
 
                     BarButton {

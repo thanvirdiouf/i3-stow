@@ -94,10 +94,10 @@ class ControlPath(unittest.TestCase):
                                   f"Path({str(capture)!r}).write_text(json.dumps(sys.argv[1:]))\n")
             quickshell.chmod(0o755)
             env = dict(os.environ, PATH=str(binary) + ":" + os.environ["PATH"])
-            subprocess.run(["sh", str(linked / "control.sh"), "launcher"], env=env,
+            subprocess.run(["sh", str(linked / "control.sh"), "monitor"], env=env,
                            check=True, capture_output=True, timeout=5)
             self.assertEqual(json.loads(capture.read_text()),
-                             ["ipc", "--path", str(linked / "shell.qml"), "call", "desktop", "launcher"])
+                             ["ipc", "--path", str(linked / "shell.qml"), "call", "desktop", "monitor"])
 
 
 class LockHandoff(unittest.TestCase):
@@ -139,6 +139,24 @@ Path(os.environ['LOCK_TEST_CAPTURE']).write_text(json.dumps(result))
         result = self.run_locker()
         self.assertTrue(result["png"])
         self.assertIn("--nofork", result["args"])
+
+    def test_active_animated_locker_preserves_sleep_descriptor(self):
+        with tempfile.TemporaryFile() as sleep:
+            self.env["XSS_SLEEP_LOCK_FD"] = str(sleep.fileno())
+            subprocess.run(["sh", str(ROOT / ".config/i3/lock.sh")], env=self.env,
+                           pass_fds=(sleep.fileno(),), capture_output=True, check=True, timeout=5)
+        result = json.loads((self.base / "result.json").read_text())
+        self.assertEqual(result["args"], ["--nofork", "--color=1e1e2e",
+                                       "--image=" + str(ROOT / ".config/i3/lockscreen-image.png")])
+        self.assertTrue(result["sleep_fd_open"])
+
+    def test_active_locker_without_image_uses_solid_padlock_fallback(self):
+        wrapper = self.base / "lock.sh"
+        shutil.copy(ROOT / ".config/i3/lock.sh", wrapper)
+        subprocess.run(["sh", str(wrapper)], env=self.env,
+                       capture_output=True, check=True, timeout=5)
+        result = json.loads((self.base / "result.json").read_text())
+        self.assertEqual(result["args"], ["--nofork", "--color=1e1e2e"])
 
     def test_renderer_failure_still_execs_solid_locker(self):
         self.executable("quickshell", "raise SystemExit(1)")

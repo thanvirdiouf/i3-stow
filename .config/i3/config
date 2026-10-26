@@ -33,7 +33,7 @@ bindsym $mod+Shift+d exec --no-startup-id i3-msg -t send_tick dwindle-toggle
 
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
-# Quickshell renders the lock artwork; i3lock keeps its native password indicator.
+# Picom animates the lock window; i3lock keeps its native password indicator.
 # Both entry points use the same foreground locker for the suspend handshake.
 exec --no-startup-id xss-lock --transfer-sleep-lock -- "$HOME/.config/i3/lock.sh"
 bindsym $mod+l exec --no-startup-id "$HOME/.config/i3/lock.sh"
@@ -90,7 +90,7 @@ bindsym $mod+b exec --no-startup-id helium
 bindsym $mod+q kill
 
 # start dmenu (a program launcher)
-bindsym $mod+a exec --no-startup-id sh "$HOME/.config/quickshell/control.sh" launcher
+bindsym $mod+a exec --no-startup-id rofi -show drun
 bindsym $mod+F12 exec --no-startup-id sh "$HOME/.config/quickshell/control.sh" monitor
 bindsym $mod+BackSpace exec --no-startup-id ~/.config/rofi/greenpower.sh
 # A more modern dmenu replacement is rofi:

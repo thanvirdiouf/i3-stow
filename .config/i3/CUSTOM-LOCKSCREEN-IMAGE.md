@@ -1,229 +1,88 @@
-# Put your own image on the lockscreen ball
+# Superman design on the spinning lock ball
 
-> Legacy reference: the active lockscreen now uses Quickshell artwork and
-> i3lock authentication. See [the current setup notes](../../docs/setup.md#quickshell-lockscreen-artwork-on-x11).
-> The Picom lock shader is disabled. This older recipe requires restoring its
-> shader rules as well as changing the wrapper; it does not apply to the active QML design.
+The active i3lock/Picom lockscreen now uses the supplied `Superman2025Logo.jpg`
+design. The shield rotates on both faces of the purple ball. Its red/gold colors
+are retained, while the shader keys out the photo's blue backdrop. i3lock still
+owns authentication, keyboard/pointer grabs, and password feedback.
 
-This tutorial adapts the existing rotating purple ball to show a circular photo,
-avatar, or logo on both sides. It keeps the lighting, rotation, background, and
-i3lock's real password feedback. These instructions are for this setup's current
-**single 1920×1080 display**, stock i3lock, and Picom GLX backend.
+## Active files
 
-Creating this document does not apply the changes below.
+- `lock.sh` passes `lockscreen-image.png` to `i3lock --nofork`.
+- `lockscreen-avatar.png` is a 256×256 texture containing the complete shield.
+- `lockscreen-image.png` is an opaque **1920×1080** canvas with that texture in
+  its top-left 256×256 corner, plus two marker pixels.
+- `../picom/lockscreen.frag` samples the texture and maps it onto the ball.
 
-## How the image gets into the shader
+Picom gets only the lock window's texture; it does not load a separate image.
+The top-left patch carries the image into the shader, which hides the flat
+source and renders the shield on the sphere instead. Purple and cyan marker
+pixels at `(0,0)` and `(1,0)` identify image mode. Without them, the same shader
+renders the original procedural purple padlock.
 
-Picom supplies the lock window as the shader's `tex` texture. Declaring another
-sampler does not make Picom load an image from disk.
+The source patch is away from the native password indicator on this machine's
+single 1920×1080 layout. While typing, the ball stays inside i3lock's green
+ring instead of being covered by its dark disk. Backspace highlights, status
+rings, authentication text, and Caps Lock notices remain visible over the ball.
+Only the native disk's flat fills are replaced within the ball; other feedback
+pixels are preserved. Without Picom, i3lock still
+secures the screen, but its source image is visible in the top-left corner.
 
-Instead, make an opaque lockscreen PNG with a 256×256 copy of your image in its
-top-left corner. Pass that PNG to i3lock. The shader reads that corner as its
-image source, hides the flat copy, and maps it onto the rotating ball.
+## Rebuild the assets
 
-The current shader treats pixels that differ from the plain background as
-password feedback. We must exclude the image-source corner from that check, or
-the flat image will remain visible. The native password indicator stays in the
-center, outside that corner.
-
-## 1. Back up the two files you will edit
-
-Run these commands in one terminal and keep it open for the rollback commands:
-
-```sh
-cd "$HOME/.dotfiles"
-mkdir -p "$HOME/.local/state/lockscreen-backups"
-backup_dir=$(mktemp -d "$HOME/.local/state/lockscreen-backups/custom-image.XXXXXX")
-cp -- .config/i3/lock.sh "$backup_dir/lock.sh"
-cp -- .config/picom/lockscreen.frag "$backup_dir/lockscreen.frag"
-printf 'Backup directory: %s\n' "$backup_dir"
-```
-
-## 2. Prepare your image
-
-These commands use ImageMagick's `convert` utility. Change the first path to
-your image. Keep the subject near the center: the badge will crop the corners.
+These commands use ImageMagick, preserve the whole image's aspect ratio, and
+leave the original JPEG untouched. Run from the repository root:
 
 ```sh
-image="$HOME/Pictures/my-avatar.png"
+image="$HOME/Downloads/Superman2025Logo.jpg"
 
-convert "$image" -auto-orient \
-  -resize '256x256^' -gravity center -extent 256x256 \
-  -background '#1e1e2e' -alpha remove -alpha off \
-  "$HOME/.dotfiles/.config/i3/lockscreen-avatar.png"
+convert "$image" -auto-orient -resize 224x224 \
+  -background '#1e1e2e' -gravity center -extent 256x256 \
+  -alpha remove -alpha off PNG24:.config/i3/lockscreen-avatar.png
 
 convert -size 1920x1080 'xc:#1e1e2e' \
-  "$HOME/.dotfiles/.config/i3/lockscreen-avatar.png" \
+  .config/i3/lockscreen-avatar.png \
   -gravity northwest -geometry +0+0 -composite \
-  "PNG24:$HOME/.dotfiles/.config/i3/lockscreen-image.png"
+  -fill '#bd93f9' -draw 'point 0,0' \
+  -fill '#8be9fd' -draw 'point 1,0' \
+  PNG24:.config/i3/lockscreen-image.png
 ```
 
-The first command creates the square image source. The second embeds it into a
-full-screen, opaque PNG. Image conversion happens once during setup, rather than
-when you lock or suspend.
+If the display layout changes, rebuild the canvas to match the total desktop
+size and check that no monitor's native password indicator overlaps the source
+patch. The ball remains centered on the combined desktop. No conversion runs
+during locking or suspend, so the xss-lock readiness handoff stays immediate.
 
-The background must stay `#1e1e2e`, matching `BACKGROUND` in the shader.
-The 256×256 source size must match `AVATAR_SIZE` below.
+If using individual Stow links, rerun the documented Stow command to link the
+new PNGs. The current i3 directory symlink already exposes both files.
 
-If the display layout changes, regenerate the canvas with the new total desktop
-dimensions and reassess the source corner: no monitor's native password
-indicator should overlap that 256×256 area. The ball remains centered on the
-combined desktop. This recipe does not automatically adapt the canvas to hotplug
-or DPI changes.
+## Customize or disable
 
-## 3. Give i3lock the PNG
+- Change `seconds * 0.65` in the shader to change rotation speed.
+- Adjust `emblem / 1.8` to change the shield's size on the sphere.
+- The blue-background key is tailored to this image. For a different photo,
+  adjust or remove `blue_background` in the shader.
+- Move `lockscreen-image.png` aside to restore the original purple padlock.
+  No shader edit is needed. The wrapper's solid-color fallback is automatic.
+- Keep `--color=1e1e2e` synchronized with the shader's `BACKGROUND` constant.
 
-Replace the contents of `.config/i3/lock.sh` with:
-
-```sh
-#!/bin/sh
-# SPDX-License-Identifier: GPL-3.0-or-later
-# Keep exec and --nofork for xss-lock's suspend-readiness handshake.
-image="$HOME/.config/i3/lockscreen-image.png"
-if [ -r "$image" ]; then
-    exec i3lock --nofork --color=1e1e2e --image="$image"
-fi
-exec i3lock --nofork --color=1e1e2e
-```
-
-Keep this file executable. Your existing bindings and xss-lock listener already
-call this path, so their commands do not need changing.
-
-The fallback handles a missing image file. If the PNG is corrupt, replace or
-remove it before trying to lock again; a readable corrupt file still reaches
-i3lock's image loader.
-
-## 4. Teach the shader where to find the image
-
-Edit `.config/picom/lockscreen.frag`. Keep `#version 330` as its first line.
-
-After the existing `PURPLE` constant, add this constant and function:
-
-```glsl
-const float AVATAR_SIZE = 256.0;
-
-vec3 avatar_color(vec2 image_uv) {
-    // Pixel coordinates inside the PNG's top-left image-source patch.
-    vec2 pixel = clamp(image_uv, vec2(0.0), vec2(1.0)) * (AVATAR_SIZE - 1.0);
-    return texelFetch(tex, ivec2(pixel), 0).rgb;
-}
-```
-
-At the start of `window_shader()`, find:
-
-```glsl
-if (distance(source.rgb, BACKGROUND) > 0.015) {
-    return vec4(source.rgb, 1.0);
-}
-```
-
-Replace that condition and its body with:
-
-```glsl
-bool image_patch = texcoord.x < AVATAR_SIZE && texcoord.y < AVATAR_SIZE;
-if (!image_patch && distance(source.rgb, BACKGROUND) > 0.015) {
-    return vec4(source.rgb, 1.0);
-}
-```
-
-This hides the flat image-source patch behind the generated background while
-preserving the actual password indicator elsewhere.
-
-## 5. Replace the drawn padlock with the image badge
-
-Inside the sphere-rendering block, keep the existing `longitude` calculation and
-this line:
-
-```glsl
-vec2 emblem = vec2(longitude / 0.95, rotated.y * 1.25);
-```
-
-Immediately after it, replace everything from `float mark = ...` through
-`mark *= ...` with:
-
-```glsl
-// A circular badge repeated on both sides of the rotating sphere.
-vec2 image_uv = emblem / 1.44 + 0.5;
-image_uv.y = 1.0 - image_uv.y;
-float badge = 1.0 - smoothstep(0.70, 0.73, length(emblem));
-vec3 image_color = avatar_color(image_uv);
-```
-
-Then replace:
-
-```glsl
-vec3 surface = mix(vec3(0.13, 0.11, 0.20), PURPLE * 0.85, mark);
-```
-
-with:
-
-```glsl
-vec3 surface = mix(vec3(0.13, 0.11, 0.20), image_color, badge);
-```
-
-Leave the remaining lighting, rim glow, edge smoothing, and final opaque return
-unchanged. The old `lock_shape()` and `rounded_box()` functions can remain; they
-will simply be unused.
-
-The image will curve with the sphere and turn out of view near its sides. It is
-a badge on a rotating surface, not a flat overlay that always faces you.
-
-## 6. Reload and check
-
-Confirm the asset is reachable through your live configuration path:
-
-```sh
-test -r "$HOME/.config/i3/lockscreen-image.png" && echo 'Image is linked'
-sh -n "$HOME/.config/i3/lock.sh"
-```
-
-Your current i3/Picom configuration directories resolve into this repository.
-If you later switch to individual Stow links, rerun the repository's documented
-Stow command to link the new PNG files before proceeding.
-
-Ask the existing Picom process to reload its configuration and shader:
+Reload Picom after shader changes:
 
 ```sh
 pkill -USR1 -u "$(id -u)" -x picom
 ```
 
-An i3 reload is unnecessary because the launcher path has not changed. Changes
-to `lock.sh` take effect the next time it is executed.
+The shader was compiled and rendered in an invisible GLX buffer on the desktop's
+Intel GPU at multiple rotation angles. Cairo fixtures modeled stock i3lock
+2.14.1 typing, backspace, verifying, and wrong-password states. The typing-state
+logo center matched the idle render exactly, and solid native ring/separator
+pixels and black message pixels were preserved exactly. A second typing frame
+confirmed the ball still rotates. The disk-fill colors follow
+[upstream i3lock 2.14.1](https://github.com/i3/i3lock/blob/2.14.1/unlock_indicator.c);
+custom i3lock builds may require matching their own fill colors.
+A real lock or suspend was not triggered during these checks.
 
-Press **Super+L** and check that:
+## Artwork provenance
 
-- Your picture rotates on the ball, with no flat picture in the top-left corner.
-- Typing produces i3lock's normal password indicator and you can unlock normally.
-- The background covers the whole screen, including its corners.
-
-These image-mapping edits are instructions, not a configuration already tested
-on your image. Check them before relying on the customized appearance.
-
-## Adjustments and troubleshooting
-
-- **Upside-down picture:** remove `image_uv.y = 1.0 - image_uv.y;` and reload.
-- **Flat image visible in the corner:** check the `image_patch` exception and
-  reload Picom. If Picom is stopped, the flat source image is expected: i3lock
-  displays its PNG directly, while continuing to lock the screen normally.
-- **Incorrect or empty picture:** verify both PNG paths and the 256×256 patch
-  dimensions. Regenerate the canvas after changing the avatar.
-- **Picture too dark:** reduce the lighting multiplier's effect by changing
-  `surface *= 0.45 + 0.65 * diffuse;` to `surface *= 0.75 + 0.25 * diffuse;`.
-- **Rotation speed:** change `seconds * 0.65`; a lower value turns more slowly.
-- **Full globe wrap:** use an equirectangular texture and longitude/latitude UV
-  mapping instead of the circular badge. That requires a different image layout;
-  a square portrait will stretch when wrapped over the whole sphere.
-
-## Roll back
-
-In the terminal where you created the backup:
-
-```sh
-cp -- "$backup_dir/lock.sh" "$HOME/.dotfiles/.config/i3/lock.sh"
-cp -- "$backup_dir/lockscreen.frag" "$HOME/.dotfiles/.config/picom/lockscreen.frag"
-pkill -USR1 -u "$(id -u)" -x picom
-```
-
-If you opened another terminal, first set `backup_dir` to the backup directory
-printed in step 1. The generated PNGs can remain on disk; the restored launcher
-and shader do not use them.
+The texture was derived from the user-supplied
+`/home/spectre/Downloads/Superman2025Logo.jpg`. The Superman artwork belongs to its
+respective rights holders and is not covered by this repository's code license.

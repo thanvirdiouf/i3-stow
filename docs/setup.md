@@ -17,7 +17,7 @@
 │   ├── nvim                    # Neovim / LazyVim configuration
 │   ├── picom                   # Compositor configuration
 │   ├── polybar                 # Status bar and external-monitor brightness script
-│   ├── quickshell              # Dracula bar, launcher, monitor, and lock artwork for i3/X11
+│   ├── quickshell              # Dracula bar and live resource monitor for i3/X11
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
 ├── docs                        # Setup guide and screenshots
@@ -57,7 +57,7 @@ APT installs the packages' library dependencies automatically.
 | `xserver-xorg`, `dbus-x11` | X11 desktop session and D-Bus support. |
 | `i3-wm` | Window manager; also supplies `i3-msg` and `i3-nagbar`. |
 | `polybar` | Optional fallback bar. |
-| `rofi` | Fallback application launcher and `greenpower.sh` power menu. |
+| `rofi` | Default application launcher and `greenpower.sh` power menu. |
 | `picom` | Compositor configured in `.config/picom/picom.conf`. |
 | `kitty`, `thunar`, `mpv` | Terminal and file-manager shortcuts; configured media player. |
 | `dex` | Starts XDG autostart applications when i3 starts. |
@@ -181,7 +181,7 @@ polybar --reload --config="$HOME/.config/polybar/config.ini" example
 
 | Control | Action |
 | --- | --- |
-| Launcher icon / `Super+A` | Open the Quickshell application launcher. |
+| Launcher icon / `Super+A` | Open the Rofi application launcher. |
 | Monitor icon / `Super+F12` | Toggle the live system monitor. |
 | Workspace number | Switch workspace; scrolling cycles workspaces on the focused output. |
 | Clock | Toggle time/date; hover for the full date. |
@@ -323,20 +323,19 @@ then stop the running helper and reload i3. Reloads cannot start duplicate helpe
 
 ### Application launcher and resource monitor
 
-The launcher and monitor share the bar's `Theme.qml`: Dracula surfaces, purple
-outlines, rounded corners, and JetBrains Mono Nerd Font. i3 floats and centers
-both windows. **Super+A** opens/toggles the launcher, and **Super+F12** toggles
-the monitor. The bar offers the same actions. Press **Escape** or the close
-button to dismiss either window. The launcher also has a lock button.
+**Super+A** and the bar's application button open **Rofi** with the existing
+Dracula theme. Rofi is also the target of `control.sh launcher` and the shell's
+`desktop launcher` IPC action; it works without Quickshell running.
 
-Search matches application names, descriptions, keywords, and categories, with
-name matches ranked first. Use **Up/Down**, **Enter**, or click a result. XDG
-application entries come from Quickshell's native `DesktopEntries` index;
-`launch-app.py` resolves the desktop file in XDG directory precedence and lets
-`gio launch` handle Exec field codes, working directories, terminal apps, and
-D-Bus activation. On this machine the system terminal alternative is Kitty.
-Missing theme icons use a letter tile. If Quickshell is stopped, the launcher
-shortcut falls back to Rofi; the monitor shortcut displays a notice.
+**Super+F12** and the monitor icon toggle the Quickshell system monitor. It
+shares the bar's `Theme.qml`: Dracula surfaces, purple outlines, rounded corners,
+and JetBrains Mono Nerd Font. i3 floats and centers the window. Press **Escape**
+or its close button to dismiss it. If Quickshell is stopped, its shortcut
+displays a notice.
+
+The earlier QML launcher and static lock artwork files remain available in the
+repository as optional components, but the active shell does not instantiate
+the launcher or generate cached lock artwork.
 
 The monitor samples every two seconds while open and stops its Python process
 when dismissed. It shows CPU utilization, available-memory based RAM usage,
@@ -348,50 +347,46 @@ the network graph scales to its largest retained sample. Disk capacity describes
 `/`, and network totals can include virtual interfaces. No process controls are
 provided. The sampler uses Python's standard library and Linux `/proc`/`/sys`.
 
-### Quickshell lockscreen artwork on X11
+### Animated lockscreen
 
 **Super+L**, idle locking, and locking before suspend all use
-`.config/i3/lock.sh`. `LockScreen.qml` renders a full-screen Dracula design for
-every active monitor: purple outlines, quiet circular contours, clock/date,
-username, a lock emblem, and an unlock hint. i3lock displays the resulting PNG
-and overlays its native keypress, Caps Lock, and authentication feedback.
-Picom leaves the entire lock window opaque, without rounding, blur, or fades.
-The older animated Picom shader is retained as an unused reference.
+`.config/i3/lock.sh`. It directly execs **`i3lock --nofork --color=1e1e2e`** with the prepared
+`lockscreen-image.png` when available, preserving xss-lock's sleep file descriptor until i3lock has secured the screen.
+The image is prepared once; no QML rendering or image conversion runs during locking.
 
-This is **Quickshell artwork with i3lock authentication**. Quickshell's secure
-[`WlSessionLock`](https://quickshell.org/docs/v0.3.2/types/Quickshell.Wayland/WlSessionLock/)
-API requires Wayland and cannot secure this i3/X11 session. No regular QML
-window is used as a security boundary, and passwords never pass through the
-QML or Python code. The artwork is static while locked: the clock shows the
-time the image was rendered. A fully live Quickshell authentication surface
-would require moving to a supported Wayland compositor.
+Picom's GLX backend applies `.config/picom/lockscreen.frag` only to the i3lock
+window. It draws a spinning purple ball with the supplied Superman shield and subtle
+moving contours. The shader keys out the photo's blue backdrop while retaining
+the red/gold artwork. If the PNG is missing, it draws the original purple padlock.
+The ball remains visible inside the native typing ring: the shader removes only
+i3lock's flat indicator fills within the sphere, preserving the keypress arcs,
+status rings, authentication messages, and Caps Lock text above it. i3lock owns authentication and the keyboard/pointer
+grabs; Picom only supplies visuals. The lock window stays opaque, square-cornered,
+and free of fades, blur, and shadows. Without Picom, it is still a normal solid
+dark i3lock screen with password feedback; when the PNG is used, its source
+patch remains visible in the top-left corner.
 
-Manual locking renders current artwork offscreen with Quickshell's software
-backend, without a GPU or nixGL. Rendering has a five-second timeout; any error
-falls back to opaque, solid-color i3lock. For suspend, the bar refreshes a
-private PNG cache every minute and on display changes. The lock wrapper uses
-that cache immediately when `XSS_SLEEP_LOCK_FD` is present, avoiding rendering
-inside logind's limited suspend delay. Missing cache also falls back to solid
-i3lock. Cached artwork can be up to a minute old or briefly reflect an earlier
-monitor layout; i3lock still covers the whole desktop and owns the actual
-per-monitor authentication indicator.
+Keep `BACKGROUND` in the shader synchronized with the wrapper's `--color`:
+the shader recognizes untouched background pixels by this exact color and
+identifies the stock indicator fills composited over that background. The fill
+colors match i3lock 2.14.1. Change `seconds * 0.65` to adjust rotation
+speed. On multiple monitors the ball is centered on the combined desktop;
+native i3lock indicators retain their per-monitor layout.
 
-The wrapper ultimately **execs `i3lock --nofork`**, preserving xss-lock's sleep
-file descriptor until i3lock has secured the screen. PNG data is passed through
-an anonymous Linux memory file, so manual locking leaves no temporary images.
-The cache is `~/.cache/quickshell/spectre-lock.png` (or under `XDG_CACHE_HOME`).
+The prepared image matches the current **1920×1080** desktop and carries its
+texture in a marked 256×256 corner, away from the password indicator. Regenerate
+it after display-layout changes. See [the image setup guide](../.config/i3/CUSTOM-LOCKSCREEN-IMAGE.md)
+for the source, rebuild commands, shader settings, and original-padlock fallback.
 
-Preview the artwork safely without locking:
+This animation is produced by Picom on X11. Quickshell's secure session-lock
+API is Wayland-only; a normal QML window cannot replace i3lock's security role.
+The static QML lockscreen design from the previous revision remains in the
+repository but is not active.
 
-```sh
-python3 "$HOME/.config/quickshell/lock-screen.py" --render /tmp/lock-preview.png
-```
-
-After adding these files, rerun Stow with `--restow` as described below and
-press **Super+Shift+C** to reload i3. Quickshell reloads QML changes itself.
-The existing xss-lock command is unchanged and does not need restarting.
-Picom normally reloads its configuration automatically. Avoid trying a real
-lock or suspend until the native i3lock authentication works on your machine.
+After changing the configuration, press **Super+Shift+C** to reload i3.
+Quickshell reloads its QML automatically. Picom normally reloads its configuration;
+if needed, restart its existing process with `pkill -USR1 -u "$(id -u)" -x picom`.
+The xss-lock command is unchanged, so its listener does not need restarting.
 
 Run the regression checks from the repository:
 
