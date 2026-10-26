@@ -8,12 +8,22 @@ DesktopWindow {
     id: root
     title: "Spectre · System Monitor"
     implicitWidth: 760
-    implicitHeight: 690
+    implicitHeight: 850
     property var stats: null
     property var cpuHistory: []
     property var memoryHistory: []
     property var diskHistory: []
     property var netHistory: []
+    property var gpuHistory: []
+    property var temperatureHistory: []
+    property string gpuId: ""
+    readonly property var gpu: stats && stats.gpus ? stats.gpus.find(g => g.utilization !== null) || stats.gpus[0] || null : null
+    readonly property var thermal: stats && stats.temperatures ? stats.temperatures : ({
+            cpu: null,
+            gpu: null,
+            storage: null,
+            chipset: null
+        })
     property string status: "Connecting to system…"
 
     function bytes(value) {
@@ -31,6 +41,20 @@ DesktopWindow {
     function open() {
         visible = true;
     }
+    function degrees(value) {
+        return value === null ? "—" : value.toFixed(0) + "°C";
+    }
+    function gpuDetail() {
+        if (!gpu)
+            return "GPU telemetry unavailable";
+        const name = gpu.name.replace(/^NVIDIA /, "").replace(/^GeForce /, "");
+        if (gpu.memoryUsed === null || gpu.memoryTotal === null)
+            return name + " · VRAM unavailable";
+        return name + " · " + bytes(gpu.memoryUsed) + " / " + bytes(gpu.memoryTotal) + " VRAM";
+    }
+    function temperatureDetail() {
+        return [["GPU", thermal.gpu], ["SSD", thermal.storage], ["Chipset", thermal.chipset]].filter(pair => pair[1] !== null).map(pair => pair[0] + " " + degrees(pair[1])).join(" · ") || "No additional temperature sensors";
+    }
 
     Process {
         id: sampler
@@ -46,6 +70,13 @@ DesktopWindow {
                     root.diskHistory = root.record(root.diskHistory, root.stats.disk.percent);
                     // Network graph is relative to the largest sample in this session.
                     root.netHistory = root.record(root.netHistory, root.stats.rx + root.stats.tx);
+                    const currentGpu = root.gpu;
+                    if (root.gpuId !== (currentGpu ? currentGpu.id : "")) {
+                        root.gpuHistory = [];
+                        root.gpuId = currentGpu ? currentGpu.id : "";
+                    }
+                    root.gpuHistory = currentGpu && currentGpu.utilization !== null ? root.record(root.gpuHistory, currentGpu.utilization) : [];
+                    root.temperatureHistory = root.thermal.cpu !== null ? root.record(root.temperatureHistory, root.thermal.cpu) : [];
                 } catch (error) {
                     root.status = "Could not read system statistics";
                 }
@@ -99,7 +130,7 @@ DesktopWindow {
                 value: root.stats ? root.stats.cpu.toFixed(0) + "%" : "—"
                 percentage: root.stats ? root.stats.cpu : 0
                 history: root.cpuHistory
-                detail: root.stats ? root.stats.cores + " threads · load " + root.stats.load.toFixed(2) + (root.stats.temperature !== null ? " · " + root.stats.temperature.toFixed(0) + "°C" : "") : "Waiting for sample"
+                detail: root.stats ? root.stats.cores + " threads · load " + root.stats.load.toFixed(2) : "Waiting for sample"
             }
             ResourceCard {
                 Layout.fillWidth: true
@@ -109,6 +140,24 @@ DesktopWindow {
                 percentage: root.stats ? root.stats.memory.percent : 0
                 history: root.memoryHistory
                 detail: root.stats ? root.bytes(root.stats.memory.used) + " / " + root.bytes(root.stats.memory.total) : ""
+            }
+            ResourceCard {
+                Layout.fillWidth: true
+                heading: "GPU"
+                accent: Theme.purple
+                value: root.gpu && root.gpu.utilization !== null ? root.gpu.utilization.toFixed(0) + "%" : "—"
+                percentage: root.gpu && root.gpu.utilization !== null ? root.gpu.utilization : 0
+                history: root.gpuHistory
+                detail: root.gpuDetail()
+            }
+            ResourceCard {
+                Layout.fillWidth: true
+                heading: "CPU TEMPERATURE"
+                accent: root.thermal.cpu !== null && root.thermal.cpu >= 90 ? Theme.red : Theme.yellow
+                value: root.degrees(root.thermal.cpu)
+                percentage: root.thermal.cpu !== null ? root.thermal.cpu : 0
+                history: root.temperatureHistory
+                detail: root.temperatureDetail()
             }
             ResourceCard {
                 Layout.fillWidth: true

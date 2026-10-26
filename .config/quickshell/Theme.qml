@@ -22,6 +22,9 @@ QtObject {
     readonly property int iconSize: 18
     readonly property int barHeight: 38
     readonly property int topMargin: 6
+    readonly property int barRevealHeight: 4
+    readonly property int barHideDelay: 5000
+    readonly property int barSlideDuration: 320
     readonly property real widthFraction: 0.60
     readonly property int minimumWidth: 1040
     readonly property int radius: 10

@@ -163,11 +163,45 @@ i3-msg 'gaps top all set 0'
 nixGL quickshell --no-duplicate
 ```
 
-Quickshell starts automatically at the next login. Its dock reserves its own
-height, including the transparent margins, so keep `gaps top 0` in i3. The normal
-10 px inner gap remains between the dock and tiled windows. The Picom config
-excludes this dock from effects that would fill or shadow its transparent
-margins. Reload Picom after linking an updated compositor config.
+Quickshell starts automatically at the next login. The bar is **hidden by
+default**. Move the cursor into the top **4 pixels** of any screen to slide
+that screen's bar down. It stays visible while the cursor is over the top edge
+or the bar, and waits **at least 5 seconds** after the cursor leaves before
+sliding back up. Returning during that delay cancels the pending hide and starts
+a fresh five-second delay on the next exit. The top margin is included in the
+hover area, so moving from the edge to a button does not interrupt the reveal.
+
+The bar and i3's reserved height share a **320 ms eased animation**, so tiled
+windows move with the bar instead of jumping by its full height. The reservation
+grows from zero to **50 pixels** on reveal, stays at that height through the
+five-second linger, and smoothly shrinks during the outgoing slide.
+Once the bar is fully hidden, that reservation is removed and tiled windows
+reclaim the space. Keep `gaps top 0` in i3. Transparent areas outside the edge
+hotspot and visible bar pass pointer events through to the applications below.
+It does not take keyboard
+focus. Each screen has its own reveal state and timer. The tray stays alive
+while the surface is hidden, and buttons, scrolling, and tooltips still work.
+
+This setup uses Quickshell's native `XPanelWindow` backend and its Qt
+`X11BypassWindowManagerHint` flag. i3 reserves managed docks' native height even
+with zero struts, so the reveal window uses override-redirect to stay alive
+without reserving permanent space. A separate transparent, non-focusable managed
+dock follows the reveal animation's height and unmaps when the slide-out
+finishes. The reveal window ignores this temporary dock's exclusion zone so it
+stays at the top edge. The configuration targets i3/X11. The Picom exclusions
+continue to keep this dock free of effects that would fill or shadow its
+transparent margins.
+
+In `Theme.qml`, `barRevealHeight` controls the hotspot, `barHideDelay` controls
+the linger in milliseconds (clamped to a minimum of 5000), and
+`barSlideDuration` controls both the bar and reservation animation (320 ms by
+default, with cubic easing at both ends).
+
+Live i3/X11 checks covered edge reveal, sustained button hover, the full
+five-second linger, re-entry resetting the timer, and clock/tray interactions
+without taking keyboard focus. Sampling i3's dock area confirmed intermediate
+heights during both animations, a 50-pixel reservation when fully revealed,
+and zero reservation once hidden.
 
 For the Polybar fallback, stop Quickshell, swap the commented startup lines in
 `.config/i3/config`, and change `gaps top 0` to `gaps top 38`. For the current
@@ -340,12 +374,33 @@ the launcher or generate cached lock artwork.
 The monitor samples every two seconds while open and stops its Python process
 when dismissed. It shows CPU utilization, available-memory based RAM usage,
 root filesystem capacity, swap, aggregate network rates (excluding loopback),
-CPU temperature when supported by hwmon, uptime, load, and seven processes
-ranked by CPU and then resident memory. Process CPU uses **100% per core**;
+GPU utilization and VRAM, CPU/GPU/SSD/chipset temperatures where available,
+uptime, load, and seven processes ranked by CPU and then resident memory.
+Process CPU uses **100% per core**;
 overall CPU is normalized across all cores. Graphs keep the last 45 samples;
 the network graph scales to its largest retained sample. Disk capacity describes
 `/`, and network totals can include virtual interfaces. No process controls are
 provided. The sampler uses Python's standard library and Linux `/proc`/`/sys`.
+
+The GPU card tracks the first GPU with usable utilization telemetry (falling
+back to the first detected telemetry device). On this machine that is the
+**NVIDIA GeForce GTX 1650 Ti**. NVIDIA readings use the driver's optional
+`nvidia-smi` tool with a one-second timeout; AMD GPUs use the documented sysfs
+`gpu_busy_percent` and VRAM counters. Intel integrated-GPU utilization is not
+currently collected. GPU polling only runs while the monitor is open. Missing
+or unsupported values show **—**, rather than fabricated zero readings, and
+failed GPU queries do not stop CPU, memory, or other statistics.
+
+The temperature card plots the warmest CPU sensor in degrees Celsius, on a
+0–100°C graph; its accent turns red at 90°C. Its footer lists the warmest GPU,
+SSD, and chipset readings when available. CPU sensors come from recognized
+hwmon drivers, SSDs prefer each NVMe drive's Composite reading, and chipset
+sensors use `pch_*`. Unrelated Wi-Fi/ACPI sensors are excluded. No root access,
+`sensors` command, or Python packages are required. For NVIDIA support, keep
+`nvidia-smi` from your installed driver on `PATH`.
+
+Telemetry interfaces: [NVIDIA query reference](https://docs.nvidia.com/deploy/nvidia-smi/)
+and [AMD GPU kernel documentation](https://kernel.org/doc/html/latest/gpu/amdgpu/thermal.html).
 
 ### Animated lockscreen
 

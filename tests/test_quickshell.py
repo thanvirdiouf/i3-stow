@@ -196,6 +196,67 @@ eDP-1 disconnected
 
 
 class ResourceSnapshots(unittest.TestCase):
+    def test_nvidia_units_and_missing_values(self):
+        rows = resources.parse_nvidia_gpus(
+            '00000000:01:00.0, NVIDIA GeForce GTX 1650 Ti, 14, 47, 4096, 47\n'
+            '00000000:02:00.0, "NVIDIA GPU, secondary", [Not Supported], N/A, 8192, N/A\n'
+            'malformed row\n')
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0]["utilization"], 14)
+        self.assertEqual(rows[0]["memoryUsed"], 47 * 1024**2)
+        self.assertEqual(rows[0]["memoryTotal"], 4 * 1024**3)
+        self.assertEqual(rows[0]["temperature"], 47)
+        self.assertIsNone(rows[1]["utilization"])
+        self.assertIsNone(rows[1]["memoryUsed"])
+        self.assertIsNone(rows[1]["temperature"])
+        for invalid in ["nan", "inf", "-1", "[N/A]", "101"]:
+            self.assertIsNone(resources.gpu_number(invalid, 100))
+
+    def test_gpu_timeout_does_not_break_sampler(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(resources.shutil, "which", return_value="/usr/bin/nvidia-smi"), \
+             patch.object(resources.subprocess, "run", side_effect=subprocess.TimeoutExpired("nvidia-smi", 1)):
+            self.assertEqual(resources.gpu_stats(Path(directory)), [])
+
+    def test_amd_sysfs_gpu_and_unreadable_fields(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            device = root / "card0/device"
+            hwmon = device / "hwmon/hwmon0"
+            hwmon.mkdir(parents=True)
+            for name, value in {"vendor": "0x1002", "product_name": "AMD Radeon fixture",
+                                "gpu_busy_percent": "32", "mem_info_vram_used": "1073741824",
+                                "mem_info_vram_total": "8589934592"}.items():
+                (device / name).write_text(value)
+            (hwmon / "temp1_input").write_text("52000")
+            with patch.object(resources.shutil, "which", return_value=None):
+                gpu = resources.gpu_stats(root)[0]
+                self.assertEqual(gpu["utilization"], 32)
+                self.assertEqual(gpu["memoryTotal"], 8 * 1024**3)
+                self.assertEqual(gpu["temperature"], 52)
+                (device / "gpu_busy_percent").write_text("not available")
+                self.assertIsNone(resources.gpu_stats(root)[0]["utilization"])
+
+    def test_temperatures_classify_sensors_and_skip_invalid_readings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixtures = [("coretemp", {"temp1_input": "49000", "temp2_input": "51000", "temp3_input": "invalid"}),
+                        ("nvme", {"temp1_label": "Composite", "temp1_input": "48850", "temp2_input": "99000"}),
+                        ("nvme", {"temp1_label": "Composite", "temp1_input": "52000"}),
+                        ("pch_cometlake", {"temp1_input": "53000"}),
+                        ("amdgpu", {"temp1_input": "47000"}),
+                        ("iwlwifi_1", {"temp1_input": "70000"})]
+            for index, (name, files) in enumerate(fixtures):
+                device = root / f"hwmon{index}"
+                device.mkdir()
+                (device / "name").write_text(name)
+                for filename, value in files.items():
+                    (device / filename).write_text(value)
+            self.assertEqual(resources.temperatures(root),
+                             {"cpu": 51, "gpu": 47, "storage": 52, "chipset": 53})
+            self.assertEqual(resources.temperatures(root / "missing"),
+                             {"cpu": None, "gpu": None, "storage": None, "chipset": None})
+
     def test_live_snapshot_units_and_bounds(self):
         memory = resources.memory()
         self.assertTrue(0 <= memory["used"] <= memory["total"])

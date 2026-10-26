@@ -14,11 +14,15 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 
 ## Quickshell
 
-The default i3/X11 bar, with the desktop's Dracula purple, rounded corners, and
-JetBrains Mono Nerd Font. Includes ten workspace buttons, the focused window
+The default i3/X11 bar auto-hides and slides down when the cursor reaches the
+top 4 pixels of a screen. It lingers for at least 5 seconds after the cursor
+leaves. The bar and i3's reserved space animate together over 320 ms; tiled
+windows reclaim all space once it is hidden. It uses Dracula purple, rounded
+corners, and JetBrains Mono Nerd Font. Includes ten workspace buttons, the focused window
 title, date/time, live PipeWire audio, battery, brightness, and a system tray.
-The system monitor shows live CPU, RAM, disk, network, temperature, and process
-statistics. The application button opens the existing Rofi launcher.
+The system monitor shows live CPU, GPU/VRAM, RAM, disk, network, hardware
+temperatures, and process statistics. The application button opens the existing
+Rofi launcher.
 
 ![Quickshell floating bar with purple workspace and clock accents](docs/screenshots/quickshell.png)
 
@@ -27,7 +31,7 @@ for dependencies, the legacy tray bridge, and switching back to Polybar.
 
 ## System monitor
 
-![CPU, memory, disk, network, and processes](docs/screenshots/quickshell-monitor.png)
+![CPU, GPU and VRAM, memory, temperatures, disk, network, and processes](docs/screenshots/quickshell-monitor.png)
 
 ## Rofi launcher and power menu
 

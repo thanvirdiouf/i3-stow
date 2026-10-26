@@ -40,7 +40,7 @@ bindsym $mod+l exec --no-startup-id "$HOME/.config/i3/lock.sh"
 # Using exec_always ensures the wallpaper is set even when you reload i3
 exec_always --no-startup-id feh --bg-fill ~/.config/i3/wall.jpg
 
-# Quickshell reserves its own dock space and starts its legacy tray bridge.
+# Quickshell auto-hides at the top edge and starts its legacy tray bridge.
 exec --no-startup-id nixGL quickshell --no-duplicate
 # Polybar fallback: stop Quickshell first, swap these startup lines, and set
 # `gaps top 38` below. Both bars cannot own the legacy tray at the same time.
@@ -235,5 +235,5 @@ bindsym $mod+r mode "resize"
 
 gaps outer 1
 gaps inner 10
-# Quickshell's dock already reserves space; an extra top gap doubles it.
+# Quickshell reserves dock space while revealed; leave no permanent bar gap.
 gaps top 0
