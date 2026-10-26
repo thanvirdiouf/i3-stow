@@ -47,6 +47,13 @@ for dependencies, the legacy tray bridge, and switching back to Polybar.
 
 ![Superman shield mapped onto the spinning purple lock ball; shader render preview](docs/screenshots/lockscreen-superman.png)
 
+| Idle ball | While typing a password |
+| --- | --- |
+| ![Superman shield on the rotating purple ball](docs/screenshots/lockscreen-superman-detail.png) | ![Superman ball remains visible inside i3lock's typing ring](docs/screenshots/lockscreen-superman-typing.png) |
+
+The ball keeps spinning inside the native typing ring. These shader previews
+show the idle and simulated typing states.
+
 </details>
 
 ## What's included
