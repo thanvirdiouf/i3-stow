@@ -6,6 +6,9 @@ QtObject {
     // Dracula, shared with i3 and Rofi. Keep the bar compact like Polybar.
     readonly property color background: "#f2282a36"
     readonly property color surface: "#44475a"
+    readonly property color base: "#282a36"
+    readonly property color inset: "#21222c"
+    readonly property int panelRadius: 20
     readonly property color foreground: "#f8f8f2"
     readonly property color muted: "#8990ad"
     readonly property color purple: "#bd93f9"

@@ -17,13 +17,21 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 The default i3/X11 bar, with the desktop's Dracula purple, rounded corners, and
 JetBrains Mono Nerd Font. Includes ten workspace buttons, the focused window
 title, date/time, live PipeWire audio, battery, brightness, and a system tray.
+The matching app launcher supports keyboard search, and the system monitor shows
+live CPU, RAM, disk, network, temperature, and process statistics.
 
 ![Quickshell floating bar with purple workspace and clock accents](docs/screenshots/quickshell.png)
 
 Run with `nixGL quickshell`. See the [Quickshell setup notes](docs/setup.md#quickshell)
 for dependencies, the legacy tray bridge, and switching back to Polybar.
 
-## Rofi
+## Launcher and system monitor
+
+| Quickshell application launcher | Quickshell system monitor |
+| --- | --- |
+| ![Searchable Dracula application launcher](docs/screenshots/quickshell-launcher.png) | ![CPU, memory, disk, network, and processes](docs/screenshots/quickshell-monitor.png) |
+
+## Rofi fallback and power menu
 
 | Application launcher | Power menu |
 | --- | --- |
@@ -37,9 +45,9 @@ for dependencies, the legacy tray bridge, and switching back to Polybar.
 </details>
 
 <details>
-<summary>Animated lockscreen preview</summary>
+<summary>Lockscreen preview</summary>
 
-![Purple lock emblem rendered by Picom; the emblem rotates while locked](docs/screenshots/lockscreen.png)
+![Quickshell lockscreen artwork with purple clock, lock emblem, and contours](docs/screenshots/quickshell-lockscreen.png)
 
 </details>
 
@@ -47,10 +55,10 @@ for dependencies, the legacy tray bridge, and switching back to Polybar.
 
 - **i3:** dwindle autotiling, gaps, and rounded purple borders.
 - **Picom + kitty:** blur, shadows, and Catppuccin Mocha terminal colors.
-- **Lockscreen:** an animated purple lock emblem with i3lock password feedback.
-- **Rofi:** Dracula launcher and a power menu with confirmation prompts.
+- **Lockscreen:** full-screen Quickshell artwork on each monitor, with secure i3lock authentication on X11. The clock is a snapshot.
+- **Rofi:** fallback launcher and a power menu with confirmation prompts.
 - **Polybar:** a fallback bar with audio and brightness controls.
-- **Quickshell:** a floating bar with a purple border, matching i3 and Rofi's Dracula palette.
+- **Quickshell:** a floating bar, searchable app launcher, and live resource monitor sharing the desktop's Dracula palette.
 
 Neovim/LazyVim, Bash, mpv, and desktop-portal settings are also included.
 
@@ -69,7 +77,8 @@ machine-specific adjustments. Stow links configurations; it does not install app
 | Shortcut | Action |
 | --- | --- |
 | `Super+Enter` | Open kitty |
-| `Super+A` / `Super+Backspace` | Launcher / power menu |
+| `Super+A` / `Super+Backspace` | Quickshell launcher / Rofi power menu |
+| `Super+F12` | Quickshell system monitor |
 | `Super+1`–`0` | Switch workspace |
 | `Super+Shift+D` | Toggle dwindle autotiling |
 | `Super+L` | Lock the screen |

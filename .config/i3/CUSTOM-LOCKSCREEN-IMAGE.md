@@ -1,5 +1,10 @@
 # Put your own image on the lockscreen ball
 
+> Legacy reference: the active lockscreen now uses Quickshell artwork and
+> i3lock authentication. See [the current setup notes](../../docs/setup.md#quickshell-lockscreen-artwork-on-x11).
+> The Picom lock shader is disabled. This older recipe requires restoring its
+> shader rules as well as changing the wrapper; it does not apply to the active QML design.
+
 This tutorial adapts the existing rotating purple ball to show a circular photo,
 avatar, or logo on both sides. It keeps the lighting, rotation, background, and
 i3lock's real password feedback. These instructions are for this setup's current

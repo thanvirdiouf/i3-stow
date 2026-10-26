@@ -24,6 +24,37 @@ ShellRoot {
     readonly property bool batteryPresent: battery.isPresent && battery.ready
     readonly property int charge: Math.round(battery.percentage * 100)
 
+    Launcher { id: appLauncher }
+    ResourceMonitor { id: systemMonitor }
+    Process {
+        id: lockArtwork
+        command: ["python3", Quickshell.shellPath("lock-screen.py"), "--update-cache"]
+        running: true
+        stderr: StdioCollector {}
+    }
+    Timer {
+        interval: 60000
+        running: true
+        repeat: true
+        onTriggered: { if (!lockArtwork.running) lockArtwork.running = true; }
+    }
+    Connections {
+        target: Quickshell
+        function onScreensChanged() { if (!lockArtwork.running) lockArtwork.running = true; }
+    }
+    IpcHandler {
+        target: "desktop"
+        function launcher(): void {
+            if (appLauncher.visible) appLauncher.visible = false;
+            else { systemMonitor.visible = false; appLauncher.open(); }
+        }
+        function monitor(): void {
+            if (systemMonitor.visible) systemMonitor.visible = false;
+            else { appLauncher.visible = false; systemMonitor.open(); }
+        }
+        function close(): void { appLauncher.visible = false; systemMonitor.visible = false; }
+    }
+
     // Own the XEmbed bridge with the shell, so it also stops when the shell exits.
     Process {
         command: ["bash", Quickshell.shellPath("tray-bridge.sh")]
@@ -134,7 +165,7 @@ ShellRoot {
                         text: "󰀻"
                         foreground: Theme.purple
                         hint: "Applications · Super+A"
-                        onClicked: Quickshell.execDetached(["rofi", "-show", "drun"])
+                        onClicked: { systemMonitor.visible = false; appLauncher.open(); }
                     }
                     Divider {
                         Layout.alignment: Qt.AlignVCenter
@@ -201,6 +232,13 @@ ShellRoot {
                     anchors.rightMargin: 7
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 3
+
+                    BarButton {
+                        text: "󰍛"
+                        foreground: Theme.purple
+                        hint: "System monitor · Super+F12"
+                        onClicked: { appLauncher.visible = false; systemMonitor.visible = !systemMonitor.visible; }
+                    }
 
                     BarButton {
                         text: !root.audio ? "󰖁 —" : root.audio.muted ? "󰖁 muted" : "󰕾 " + Math.round(root.audio.volume * 100) + "%"

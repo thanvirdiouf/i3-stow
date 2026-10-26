@@ -6,3 +6,6 @@
 /.local/bin/android-studio
 /.local/opt/android-studio/
 
+
+# Python helper/test bytecode
+__pycache__/

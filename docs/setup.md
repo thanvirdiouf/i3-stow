@@ -17,7 +17,7 @@
 │   ├── nvim                    # Neovim / LazyVim configuration
 │   ├── picom                   # Compositor configuration
 │   ├── polybar                 # Status bar and external-monitor brightness script
-│   ├── quickshell              # Default Dracula bar and legacy tray bridge for i3/X11
+│   ├── quickshell              # Dracula bar, launcher, monitor, and lock artwork for i3/X11
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
 ├── docs                        # Setup guide and screenshots
@@ -57,7 +57,7 @@ APT installs the packages' library dependencies automatically.
 | `xserver-xorg`, `dbus-x11` | X11 desktop session and D-Bus support. |
 | `i3-wm` | Window manager; also supplies `i3-msg` and `i3-nagbar`. |
 | `polybar` | Optional fallback bar. |
-| `rofi` | Application launcher and `greenpower.sh` power menu. |
+| `rofi` | Fallback application launcher and `greenpower.sh` power menu. |
 | `picom` | Compositor configured in `.config/picom/picom.conf`. |
 | `kitty`, `thunar`, `mpv` | Terminal and file-manager shortcuts; configured media player. |
 | `dex` | Starts XDG autostart applications when i3 starts. |
@@ -72,7 +72,7 @@ APT installs the packages' library dependencies automatically.
 | `ddcutil` | External-monitor brightness polling and scrolling in both bars. |
 | `xdg-desktop-portal`, `xdg-desktop-portal-gtk`, `gnome-keyring` | GTK desktop portals and the configured keyring secret portal. |
 | `fontconfig` | Discovers the bundled Nerd Fonts and supplies `fc-cache`. |
-| `python3` | Both i3 helpers; they use only Python's standard library. |
+| `python3`, `libglib2.0-bin`, `x11-xserver-utils` | i3 helpers, resource sampler, GIO application launching, and `xrandr` lock artwork sizing. |
 | `bash`, `coreutils`, `grep`, `mawk`, `util-linux`, `systemd` | Shell/scripts, `readlink`, `sleep`, `awk`, `flock`, `systemctl`, and `loginctl`; normally already installed. |
 | `psmisc`, `i3status` | `killall` and the legacy i3status refresh command still used by the audio bindings. |
 | `neovim`, `fd-find`, `ripgrep` | Editor, explicitly configured `fdfind` file picker, and plugin text searches. |
@@ -90,7 +90,7 @@ sudo apt install \
   dex xss-lock i3lock feh flameshot network-manager network-manager-gnome \
   kdeconnect policykit-1-gnome pulseaudio-utils pavucontrol \
   brightnessctl ddcutil xdg-desktop-portal xdg-desktop-portal-gtk \
-  gnome-keyring fontconfig python3 bash coreutils grep mawk util-linux \
+  gnome-keyring fontconfig python3 libglib2.0-bin x11-xserver-utils bash coreutils grep mawk util-linux \
   systemd psmisc neovim fd-find ripgrep tree-sitter-cli build-essential \
   curl ca-certificates tar gzip unzip python3-venv
 ```
@@ -181,7 +181,8 @@ polybar --reload --config="$HOME/.config/polybar/config.ini" example
 
 | Control | Action |
 | --- | --- |
-| Launcher icon | Open the existing Rofi application launcher. |
+| Launcher icon / `Super+A` | Open the Quickshell application launcher. |
+| Monitor icon / `Super+F12` | Toggle the live system monitor. |
 | Workspace number | Switch workspace; scrolling cycles workspaces on the focused output. |
 | Clock | Toggle time/date; hover for the full date. |
 | Audio | Click to mute, scroll in 5% steps (capped at 100%), right-click for Pavucontrol. |
@@ -258,7 +259,7 @@ cd "$HOME/.dotfiles"
 stow --simulate --verbose --no-folding --target="$HOME" \
   --ignore='(^|/)(\.git|\.gitignore|\.agents|\.aws|\.codex)(/|$)' \
   --ignore='(^|/)(README|COPYING)\.md$' \
-  --ignore='^docs(/|$)' \
+  --ignore='^(docs|tests)(/|$)' \
   --ignore='^\.local/share/nvim(/|$)' .
 ```
 
@@ -268,13 +269,13 @@ If the preview looks correct, apply it:
 stow --verbose --no-folding --target="$HOME" \
   --ignore='(^|/)(\.git|\.gitignore|\.agents|\.aws|\.codex)(/|$)' \
   --ignore='(^|/)(README|COPYING)\.md$' \
-  --ignore='^docs(/|$)' \
+  --ignore='^(docs|tests)(/|$)' \
   --ignore='^\.local/share/nvim(/|$)' .
 ```
 
 `--no-folding` keeps target directories as real directories and links individual
 files. The ignore rules exclude repository metadata, local tool directories,
-documentation, and Neovim runtime data. `.gitignore` controls Git tracking;
+documentation, tests, and Neovim runtime data. `.gitignore` controls Git tracking;
 Stow does not use it to decide what to link.
 
 If Stow reports a conflict, inspect and back up the existing target file, then
@@ -320,36 +321,83 @@ Normal focus, move, and resize shortcuts still work. To disable it permanently,
 remove the helper's `exec_always` line and its toggle binding from the i3 config,
 then stop the running helper and reload i3. Reloads cannot start duplicate helpers.
 
-### Animated lockscreen
+### Application launcher and resource monitor
 
-**Super+L**, idle locking, and locking before suspend use
-`.config/i3/lock.sh`. The wrapper executes stock `i3lock --nofork`, preserving
-the file descriptor passed by `xss-lock --transfer-sleep-lock` until i3lock has
-secured the screen. The Rofi suspend action is covered by the same xss-lock
-listener.
+The launcher and monitor share the bar's `Theme.qml`: Dracula surfaces, purple
+outlines, rounded corners, and JetBrains Mono Nerd Font. i3 floats and centers
+both windows. **Super+A** opens/toggles the launcher, and **Super+F12** toggles
+the monitor. The bar offers the same actions. Press **Escape** or the close
+button to dismiss either window. The launcher also has a lock button.
 
-Picom's GLX backend applies `.config/picom/lockscreen.frag` only to the i3lock
-window. It draws a rotating purple lock emblem and subtle moving contours.
-The shader preserves i3lock's native keypress indicator and authentication
-messages. The lock window stays opaque, square-cornered, and free of fades and
-shadows. If Picom is unavailable, i3lock still presents the original solid dark
-screen and password indicator. No extra packages or background images are
-required; the animation was verified with Picom 10 and i3lock 2.14.1.
+Search matches application names, descriptions, keywords, and categories, with
+name matches ranked first. Use **Up/Down**, **Enter**, or click a result. XDG
+application entries come from Quickshell's native `DesktopEntries` index;
+`launch-app.py` resolves the desktop file in XDG directory precedence and lets
+`gio launch` handle Exec field codes, working directories, terminal apps, and
+D-Bus activation. On this machine the system terminal alternative is Kitty.
+Missing theme icons use a letter tile. If Quickshell is stopped, the launcher
+shortcut falls back to Rofi; the monitor shortcut displays a notice.
 
-The visual technique was inspired by
-[ikz87's i3lock/Picom lockscreen](https://www.reddit.com/r/unixporn/comments/1klerfy/comment/ms1qpvl/).
-The artwork is generated by this repository's shader rather than the author's
-personal avatar. Edit `PURPLE`, the glow/contour strengths, or the rotation
-speed (`seconds * 0.65`) in `lockscreen.frag` to customize it. Keep
-`BACKGROUND` synchronized with `--color` in `lock.sh`; this is how the shader
-distinguishes the background from i3lock's real password feedback.
+The monitor samples every two seconds while open and stops its Python process
+when dismissed. It shows CPU utilization, available-memory based RAM usage,
+root filesystem capacity, swap, aggregate network rates (excluding loopback),
+CPU temperature when supported by hwmon, uptime, load, and seven processes
+ranked by CPU and then resident memory. Process CPU uses **100% per core**;
+overall CPU is normalized across all cores. Graphs keep the last 45 samples;
+the network graph scales to its largest retained sample. Disk capacity describes
+`/`, and network totals can include virtual interfaces. No process controls are
+provided. The sampler uses Python's standard library and Linux `/proc`/`/sys`.
 
-After adding these files, rerun the Stow command above to link `lock.sh` and
-`lockscreen.frag`. Reload i3 and restart the existing xss-lock listener for
-changes to its command to take effect (an i3 reload alone does not rerun `exec`
-startup lines). Picom normally reloads its configuration when it changes;
-restart it if necessary. On multiple monitors, the emblem is centered on the
-combined desktop; native password indicators retain i3lock's per-monitor layout.
+### Quickshell lockscreen artwork on X11
+
+**Super+L**, idle locking, and locking before suspend all use
+`.config/i3/lock.sh`. `LockScreen.qml` renders a full-screen Dracula design for
+every active monitor: purple outlines, quiet circular contours, clock/date,
+username, a lock emblem, and an unlock hint. i3lock displays the resulting PNG
+and overlays its native keypress, Caps Lock, and authentication feedback.
+Picom leaves the entire lock window opaque, without rounding, blur, or fades.
+The older animated Picom shader is retained as an unused reference.
+
+This is **Quickshell artwork with i3lock authentication**. Quickshell's secure
+[`WlSessionLock`](https://quickshell.org/docs/v0.3.2/types/Quickshell.Wayland/WlSessionLock/)
+API requires Wayland and cannot secure this i3/X11 session. No regular QML
+window is used as a security boundary, and passwords never pass through the
+QML or Python code. The artwork is static while locked: the clock shows the
+time the image was rendered. A fully live Quickshell authentication surface
+would require moving to a supported Wayland compositor.
+
+Manual locking renders current artwork offscreen with Quickshell's software
+backend, without a GPU or nixGL. Rendering has a five-second timeout; any error
+falls back to opaque, solid-color i3lock. For suspend, the bar refreshes a
+private PNG cache every minute and on display changes. The lock wrapper uses
+that cache immediately when `XSS_SLEEP_LOCK_FD` is present, avoiding rendering
+inside logind's limited suspend delay. Missing cache also falls back to solid
+i3lock. Cached artwork can be up to a minute old or briefly reflect an earlier
+monitor layout; i3lock still covers the whole desktop and owns the actual
+per-monitor authentication indicator.
+
+The wrapper ultimately **execs `i3lock --nofork`**, preserving xss-lock's sleep
+file descriptor until i3lock has secured the screen. PNG data is passed through
+an anonymous Linux memory file, so manual locking leaves no temporary images.
+The cache is `~/.cache/quickshell/spectre-lock.png` (or under `XDG_CACHE_HOME`).
+
+Preview the artwork safely without locking:
+
+```sh
+python3 "$HOME/.config/quickshell/lock-screen.py" --render /tmp/lock-preview.png
+```
+
+After adding these files, rerun Stow with `--restow` as described below and
+press **Super+Shift+C** to reload i3. Quickshell reloads QML changes itself.
+The existing xss-lock command is unchanged and does not need restarting.
+Picom normally reloads its configuration automatically. Avoid trying a real
+lock or suspend until the native i3lock authentication works on your machine.
+
+Run the regression checks from the repository:
+
+```sh
+python3 -m unittest discover -s tests -v
+```
 
 ## Maintaining the links
 
