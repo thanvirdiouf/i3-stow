@@ -1,0 +1,42 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Native longest-side insertion supplies the familiar dwindle experience.
+# Some bspc setters return 1 for a no-op (for example monocle on an empty tree).
+# Apply all preferences rather than aborting midway through a reload.
+set -u
+config_dir=$(CDPATH= cd -- "$(dirname -- "$(readlink -f -- "$0")")" && pwd)
+bspc config border_width 3
+bspc config window_gap 10
+bspc config normal_border_color '#694b8a'
+bspc config active_border_color '#694b8a'
+bspc config focused_border_color '#bd93f9'
+bspc config presel_feedback_color '#bd93f9'
+bspc config split_ratio 0.5
+bspc config automatic_scheme longest_side
+bspc config initial_polarity second_child
+bspc config removal_adjustment true
+bspc config focus_follows_pointer true
+bspc config pointer_follows_focus false
+bspc config pointer_follows_monitor false
+bspc config pointer_modifier mod4
+bspc config pointer_action1 move
+bspc config pointer_action2 resize_side
+bspc config pointer_action3 resize_corner
+bspc config borderless_monocle false
+bspc config gapless_monocle false
+bspc config single_monocle false
+bspc config honor_size_hints false
+# bspwm's struts only grow padding. Quickshell sets monitor padding directly
+# on reveal AND hide; ignoring struts prevents a stale permanent bar gap.
+bspc config ignore_ewmh_struts true
+# Top padding belongs to Quickshell, including while reloading this file.
+# Its backend clears stale padding when it starts and when it exits.
+bspc config bottom_padding 0
+bspc config left_padding 0
+bspc config right_padding 0
+bspc config external_rules_command "$config_dir/rules.py"
+python3 "$config_dir/actions.py" desktops || exit 1
+# Reloads only reapply settings. The session owner prevents duplicate daemons.
+if [ "${SPECTRE_BSPWM_TEST:-0}" != 1 ]; then
+    python3 "$config_dir/session.py" >/dev/null 2>&1 &
+fi

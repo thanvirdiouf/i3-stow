@@ -2,7 +2,7 @@
 
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
-My Linux/X11 desktop, built around i3 and managed with GNU Stow.
+My Linux/X11 desktop, with i3 and bspwm sessions, managed with GNU Stow.
 
 ![i3 desktop with rounded purple borders and a translucent kitty terminal](docs/screenshots/desktop.png)
 
@@ -14,9 +14,9 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 
 ## Quickshell
 
-The default i3/X11 bar auto-hides and slides down when the cursor reaches the
+The shared i3/bspwm X11 bar auto-hides and slides down when the cursor reaches the
 top 4 pixels of a screen. It lingers for at least 5 seconds after the cursor
-leaves. The bar and i3's reserved space animate together over 320 ms; tiled
+leaves. The bar and the window manager's reserved space animate together over 320 ms; tiled
 windows reclaim all space once it is hidden. It uses Dracula purple, rounded
 corners, and JetBrains Mono Nerd Font. Includes ten workspace buttons, the focused window
 title, date/time, live PipeWire audio, battery, brightness, and a system tray.
@@ -63,6 +63,7 @@ show the idle and simulated typing states.
 ## What's included
 
 - **i3:** dwindle autotiling, gaps, and rounded purple borders.
+- **bspwm + sxhkd:** an alternative session with native longest-side tiling and the same applications, shortcuts, Quickshell bar, and lockscreen. See the [bspwm guide](docs/bspwm.md).
 - **Picom + kitty:** animated tile resizing with upstream Picom 13, blur, shadows, and Catppuccin Mocha terminal colors.
 - **Lockscreen:** a Superman shield on a spinning purple ball animated by Picom, with native i3lock authentication.
 - **Rofi:** default application launcher and a power menu with confirmation prompts.
@@ -94,7 +95,8 @@ machine-specific adjustments. Stow links configurations; it does not install app
 | `Print` / `Shift+Print` | Full-desktop / area screenshot |
 | `Super+Shift+C` | Reload i3 |
 
-More bindings are in the [i3 config](.config/i3/config).
+More bindings are in the [i3 config](.config/i3/config). The [bspwm guide](docs/bspwm.md)
+explains its equivalent controls and native layout choices.
 
 ## License
 

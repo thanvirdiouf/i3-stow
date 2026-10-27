@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Familiar muscle memory, with bspwm-native tree operations.
+super + Return
+    kitty
+super + e
+    thunar
+super + b
+    helium
+super + a
+    rofi -show drun
+super + F12
+    sh "$HOME/.config/quickshell/control.sh" monitor
+super + BackSpace
+    bash "$HOME/.config/rofi/greenpower.sh"
+super + l
+    "$HOME/.config/i3/lock.sh"
+super + q
+    bspc node -c
+
+super + {j,k,u,semicolon,Left,Down,Up,Right}
+    bspc node -f {west,south,north,east,west,south,north,east}
+# Cycle also works in monocle, where windows occupy the same rectangle.
+super + Tab
+    bspc node -f next.local.!hidden.window
+super + shift + Tab
+    bspc node -f prev.local.!hidden.window
+super + shift + {j,k,l,semicolon,Left,Down,Up,Right}
+    bspc node -s {west,south,north,east,west,south,north,east} --follow || bspc node -m {west,south,north,east,west,south,north,east} --follow
+super + {1-9,0}
+    bspc desktop -f {1-9,10}
+super + shift + {1-9,0}
+    bspc node -d {1-9,10}
+super + {button7,button6}
+    python3 "$HOME/.config/bspwm/actions.py" scroll {prev,next}
+
+alt + Return
+    bspc node -t '~fullscreen'
+super + w
+    bspc node -t '~floating'
+super + space
+    python3 "$HOME/.config/bspwm/actions.py" focus-mode
+# Monocle provides a focused stack; restore the binary tiling with Super+V.
+super + s
+    bspc desktop -l monocle
+super + v
+    bspc desktop -l tiled; bspc node @parent -R 90
+super + shift + d
+    python3 "$HOME/.config/bspwm/actions.py" scheme
+# Native tree balance and explicit placement, useful beyond the i3 workflow.
+super + control + b
+    bspc node @/ -B
+super + control + {Left,Down,Up,Right}
+    bspc node -p '~{west,south,north,east}'
+super + control + space
+    bspc node -p cancel
+
+# Persistent resize chain: Escape or Enter exits; no new sxhkd instance.
+super + r : {j,k,l,semicolon,Left,Down,Up,Right}
+    python3 "$HOME/.config/bspwm/actions.py" resize {west,south,north,east,west,south,north,east}
+super + r : Return
+    kill -ALRM "$SXHKD_PID"
+super + r : super + r
+    kill -ALRM "$SXHKD_PID"
+super + shift + c
+    python3 "$HOME/.config/bspwm/actions.py" reload
+super + shift + r
+    bspc wm -r
+super + shift + e
+    python3 "$HOME/.config/bspwm/actions.py" logout
+
+XF86AudioRaiseVolume
+    pactl set-sink-volume @DEFAULT_SINK@ +10%
+XF86AudioLowerVolume
+    pactl set-sink-volume @DEFAULT_SINK@ -10%
+XF86AudioMute
+    pactl set-sink-mute @DEFAULT_SINK@ toggle
+XF86AudioMicMute
+    pactl set-source-mute @DEFAULT_SOURCE@ toggle
+XF86MonBrightnessUp
+    brightnessctl --class=backlight --min-value=1 set +10%
+XF86MonBrightnessDown
+    brightnessctl --class=backlight --min-value=1 set 10%-
+@Print
+    mkdir -p "$HOME/Pictures/Screenshots"; flameshot full --clipboard --path "$HOME/Pictures/Screenshots"
+shift + @Print
+    mkdir -p "$HOME/Pictures/Screenshots"; flameshot gui --accept-on-select --clipboard --path "$HOME/Pictures/Screenshots"

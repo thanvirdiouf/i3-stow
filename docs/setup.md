@@ -11,6 +11,8 @@
 ├── .bashrc                     # Bash history, prompt, aliases, and tool paths
 ├── .inputrc                    # Readline configuration
 ├── .config
+│   ├── bspwm                   # Alternative native binary-tiling session
+│   ├── sxhkd                   # bspwm shortcuts and modal resizing
 │   ├── i3                      # Window manager configuration and wallpaper
 │   ├── kitty                   # Terminal configuration and theme
 │   ├── mpv                     # Media player keybindings
@@ -56,6 +58,7 @@ APT installs the packages' library dependencies automatically.
 | `git`, `stow` | Clone the repository, link dotfiles, and download Neovim plugins. |
 | `xserver-xorg`, `dbus-x11` | X11 desktop session and D-Bus support. |
 | `i3-wm` | Window manager; also supplies `i3-msg` and `i3-nagbar`. |
+| `bspwm`, `sxhkd`, `x11-utils` | Alternative session, hotkeys, and X11 window-property rules; see [bspwm.md](bspwm.md). |
 | `polybar` | Optional fallback bar. |
 | `rofi` | Default application launcher and `greenpower.sh` power menu. |
 | `picom` | Distribution compositor fallback; smooth tiling uses upstream Picom 13 via Nix (see below). |
@@ -128,15 +131,21 @@ the command above alone does not satisfy these editor version requirements.
 - **Session utilities:** `xinit` is optional if you start X11 with `startx`
   instead of a display manager. `libpam-gnome-keyring` is optional for keyring
   unlocking at login; `tree` is used by the maintenance example below.
-- **Compositor startup:** i3 launches `.config/picom/start.sh`. It prefers the
-  isolated upstream build described below, then falls back to the distribution
-  `picom`. Disable other Picom autostarts so they do not race for the display.
+- **Compositor startup:** both sessions launch `.config/picom/start.sh`, which
+  resolves `picom` from `PATH`, preferring the regular Nix profile when it is
+  before the distribution binaries. The included `autostart/picom.desktop`
+  overrides the distribution's plain Picom autostart, preventing it from racing
+  with the nixGL-wrapped session launcher. Disable any additional custom Picom
+  autostarts too.
 - **Monitor access:** `.config/polybar/monitor-brightness.sh` hardcodes I2C bus
   `3`. Adjust it for your display, enable DDC/CI on the monitor, and ensure your
   user can access the appropriate `/dev/i2c-*` device (with `i2c-dev` loaded).
 - **Authentication agent:** check the hardcoded
   `/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1` path if using
   a different distribution or authentication-agent package.
+
+For the alternative session and its native layout choices, see the
+[bspwm guide](bspwm.md).
 
 ### Picom and smooth tiling
 
@@ -199,7 +208,7 @@ The live bar's reservation behavior is checked separately as described below.
 ### Quickshell
 
 The default session uses Quickshell. The config in `.config/quickshell`
-was tested with **Quickshell 0.3.2** under i3/X11 using `nixGL quickshell`.
+was tested with **Quickshell 0.3.2** under i3/X11 and bspwm in Xephyr using `nixGL quickshell`.
 It uses the same Dracula colors as i3/Rofi, rounded surfaces, and the bundled
 JetBrains Mono Nerd Font. Edit `Theme.qml` for colors, sizing, and spacing.
 The Qt cursor uses **Bibata-Modern-Ice**, matching GTK. Install that cursor theme
@@ -230,12 +239,14 @@ sliding back up. Returning during that delay cancels the pending hide and starts
 a fresh five-second delay on the next exit. The top margin is included in the
 hover area, so moving from the edge to a button does not interrupt the reveal.
 
-The bar and i3's reserved height share a **320 ms eased animation**, so tiled
+The bar and the reserved height share a **320 ms eased animation**, so tiled
 windows move with the bar instead of jumping by its full height. The reservation
 grows from zero to **50 pixels** on reveal, stays at that height through the
 five-second linger, and smoothly shrinks during the outgoing slide.
 Once the bar is fully hidden, that reservation is removed and tiled windows
-reclaim the space. Keep `gaps top 0` in i3. Transparent areas outside the edge
+reclaim the space. i3 uses a temporary dock; bspwm's backend drives monitor
+padding directly because its EWMH struts cannot shrink the reservation.
+Keep `gaps top 0` in i3. Transparent areas outside the edge
 hotspot and visible bar pass pointer events through to the applications below.
 It does not take keyboard
 focus. Each screen has its own reveal state and timer. The tray stays alive
@@ -244,10 +255,11 @@ while the surface is hidden, and buttons, scrolling, and tooltips still work.
 This setup uses Quickshell's native `XPanelWindow` backend and its Qt
 `X11BypassWindowManagerHint` flag. i3 reserves managed docks' native height even
 with zero struts, so the reveal window uses override-redirect to stay alive
-without reserving permanent space. A separate transparent, non-focusable managed
+without reserving permanent space. In i3, a separate transparent, non-focusable managed
 dock follows the reveal animation's height and unmaps when the slide-out
 finishes. The reveal window ignores this temporary dock's exclusion zone so it
-stays at the top edge. The configuration targets i3/X11. The Picom exclusions
+stays at the top edge. bspwm uses direct per-monitor padding in place of this
+spacer. The Picom rules
 continue to keep this dock free of effects that would fill or shadow its
 transparent margins.
 

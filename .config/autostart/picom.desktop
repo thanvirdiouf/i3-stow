@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Desktop Entry]
+Type=Application
+Name=Picom (managed by window-manager startup)
+# Override the distribution's picom.desktop. Both WM sessions start the Nix
+# package through picom/start.sh with nixGL; a plain XDG launch races with it.
+Hidden=true

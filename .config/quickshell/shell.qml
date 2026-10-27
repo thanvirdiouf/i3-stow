@@ -4,11 +4,10 @@
 //@ pragma Env XCURSOR_THEME = Bibata-Modern-Ice
 //@ pragma Env XCURSOR_PATH = /usr/share/icons:/usr/local/share/icons
 // SPDX-License-Identifier: GPL-3.0-or-later
-// i3/X11 desktop bar. Run with: nixGL quickshell
+// i3/bspwm X11 desktop bar. Run with: nixGL quickshell
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.I3
 import Quickshell.Io
 import Quickshell.X11
 import Quickshell.Services.Pipewire
@@ -18,7 +17,8 @@ import Quickshell.Widgets
 
 ShellRoot {
     id: root
-    property string windowTitle: "Desktop"
+    readonly property bool bspwm: Quickshell.env("SPECTRE_WM") === "bspwm" || Quickshell.env("XDG_CURRENT_DESKTOP").toLowerCase().includes("bspwm")
+    readonly property string windowTitle: desktopBackend.item ? desktopBackend.item.windowTitle : "Desktop"
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var audio: sink && sink.ready ? sink.audio : null
     readonly property var battery: UPower.displayDevice
@@ -57,44 +57,9 @@ ShellRoot {
         precision: SystemClock.Minutes
     }
 
-    // Subscribe to title/focus changes; query once per burst, never poll the tree.
-    I3IpcListener {
-        subscriptions: ["window", "workspace"]
-        onIpcEvent: titleDebounce.restart()
-    }
-    Timer {
-        id: titleDebounce
-        interval: 50
-        onTriggered: {
-            if (titleProcess.running)
-                restart();
-            else
-                titleProcess.running = true;
-        }
-    }
-    Process {
-        id: titleProcess
-        command: ["i3-msg", "-t", "get_tree"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                function focused(node) {
-                    if (node.focused && node.window)
-                        return node.name || "Untitled";
-                    for (const child of (node.nodes || []).concat(node.floating_nodes || [])) {
-                        const title = focused(child);
-                        if (title !== null)
-                            return title;
-                    }
-                    return null;
-                }
-                try {
-                    root.windowTitle = focused(JSON.parse(text)) || "Desktop";
-                } catch (error) {
-                    root.windowTitle = "Desktop";
-                }
-            }
-        }
+    Loader {
+        id: desktopBackend
+        source: root.bspwm ? "BspwmBackend.qml" : "I3Backend.qml"
     }
 
     Variants {
@@ -132,10 +97,15 @@ ShellRoot {
             }
 
             readonly property bool compact: surface.width < 1100
-            readonly property var workspaces: I3.workspaces.values
+            readonly property var workspaces: desktopBackend.item ? desktopBackend.item.workspaces : []
             property bool showDate: false
             property bool revealed: false
             property real revealProgress: revealed ? 1 : 0
+            readonly property int reservedHeight: Math.round((Theme.barHeight + Theme.topMargin * 2) * revealProgress)
+            onReservedHeightChanged: {
+                if (root.bspwm && desktopBackend.item)
+                    desktopBackend.item.reserveSpace(panel.screen.name, reservedHeight);
+            }
             Behavior on revealProgress {
                 NumberAnimation {
                     duration: Theme.barSlideDuration
@@ -148,7 +118,7 @@ ShellRoot {
                 // so tiled windows move with it instead of jumping by 50px.
                 // Unmap at zero: i3 reserves even zero-strut managed docks.
                 screen: panel.screen
-                visible: panel.revealProgress > 0
+                visible: !root.bspwm && panel.revealProgress > 0
                 anchors { top: true; left: true; right: true }
                 implicitHeight: Math.max(1, Math.round((Theme.barHeight + Theme.topMargin * 2) * panel.revealProgress))
                 exclusionMode: ExclusionMode.Auto
@@ -226,10 +196,10 @@ ShellRoot {
                                 horizontalPadding: 3
                                 visible: surface.width >= 900 || workspace !== null
                                 active: workspace !== null && workspace.active && workspace.monitor !== null && workspace.monitor.name === panel.screen.name
-                                foreground: workspace && workspace.urgent ? Theme.red : workspace ? Theme.foreground : Theme.muted
+                                foreground: workspace && workspace.urgent ? Theme.red : workspace && workspace.occupied !== false ? Theme.foreground : Theme.muted
                                 hint: "Workspace " + number + (workspace && workspace.monitor ? " · " + workspace.monitor.name : "")
-                                onClicked: I3.dispatch("workspace number " + number)
-                                onScrolled: direction => I3.dispatch(direction > 0 ? "workspace prev_on_output" : "workspace next_on_output")
+                                onClicked: desktopBackend.item.focusWorkspace(String(number))
+                                onScrolled: direction => desktopBackend.item.scrollWorkspace(direction)
                             }
                         }
                         // Preserve named workspaces as well as the ten numbered bindings.
@@ -242,7 +212,7 @@ ShellRoot {
                                 active: modelData.active && modelData.monitor !== null && modelData.monitor.name === panel.screen.name
                                 foreground: modelData.urgent ? Theme.red : Theme.foreground
                                 hint: "Workspace " + modelData.name
-                                onClicked: I3.dispatch("workspace " + JSON.stringify(modelData.name))
+                                onClicked: desktopBackend.item.focusWorkspace(modelData.name)
                             }
                         }
                     }
