@@ -81,7 +81,11 @@ exports the correct PID on sxhkd 0.6.2 so exits and reloads target that instance
 - On first setup, desktops 1–10 are spread across the currently connected
   monitors. Names remain global: focusing desktop 7 selects its monitor.
   Reloads preserve desktop names, window placement, and layouts. Extra named
-  desktops remain visible in the bar. After changing monitor arrangements,
+  desktops remain visible in the bar. A monitor listener replaces bspwm's
+  default `Desktop` after hotplug with workspace **10** if that slot is unused.
+  Otherwise it uses **11** (or the next free higher number), preserving every
+  open window and leaving the lower-numbered workspaces on their existing monitors.
+  After changing monitor arrangements,
   bspwm can move a desktop with `bspc desktop <name> -m <monitor>`; reload does
   not redistribute existing work.
 - The bar retains the top-four-pixel trigger and at least five-second linger.

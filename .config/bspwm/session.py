@@ -22,6 +22,7 @@ def main():
         env = dict(os.environ, XDG_CURRENT_DESKTOP='bspwm', SPECTRE_WM='bspwm')
         children = []
         commands = [
+            ['python3', str(config / 'bspwm/monitors.py')],
             ['sh', str(config / 'sxhkd/start.sh')],
             ['sh', str(config / 'picom/start.sh')],
             ['nixGL', 'quickshell', '--no-duplicate'],

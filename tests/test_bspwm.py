@@ -46,10 +46,31 @@ class BspwmExperience(unittest.TestCase):
                                                    dict(id=11, name='work', root=None)])])
         with patch.object(actions, 'bsp', return_value=json.dumps(world)) as bsp:
             actions.desktops()
-        mutations = [call.args for call in bsp.call_args_list[1:]]
+        mutations = [call.args for call in bsp.call_args_list if call.args[0] != 'wm']
         self.assertEqual(len(mutations), 9)
         self.assertTrue(all(args[:3] == ('monitor', '1', '-a') for args in mutations))
         self.assertFalse(any('-r' in args or '-d' in args for args in mutations))
+
+    def test_hotplug_reuses_empty_number_without_moving_live_windows(self):
+        import json
+        numbered = [dict(id=10 + n, name=str(n), root=None if n in (4, 10) else {'id': n})
+                    for n in range(1, 11)]
+        world = dict(monitors=[dict(id=1, desktops=numbered),
+                               dict(id=2, desktops=[dict(id=99, name='Desktop', root=None)])])
+        with patch.object(actions, 'bsp', return_value=json.dumps(world)) as bsp:
+            actions.desktops()
+        mutations = [call.args for call in bsp.call_args_list if call.args[0] != 'wm']
+        self.assertEqual(mutations, [('desktop', '20', '-r'), ('desktop', '99', '-n', '10')])
+
+    def test_occupied_default_keeps_its_tree_when_all_numbers_are_busy(self):
+        import json
+        numbered = [dict(id=10 + n, name=str(n), root={'id': n}) for n in range(1, 11)]
+        world = dict(monitors=[dict(id=1, desktops=numbered),
+                               dict(id=2, desktops=[dict(id=99, name='Desktop', root={'id': 123})])])
+        with patch.object(actions, 'bsp', return_value=json.dumps(world)) as bsp:
+            actions.desktops()
+        mutations = [call.args for call in bsp.call_args_list if call.args[0] != 'wm']
+        self.assertEqual(mutations, [('desktop', '99', '-n', '11')])
 
 
 if __name__ == '__main__':

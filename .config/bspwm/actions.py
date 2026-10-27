@@ -24,11 +24,32 @@ def desktops():
         if name not in existing:
             monitor = monitors[min((index - 1) * len(monitors) // 10, len(monitors) - 1)]
             bsp('monitor', str(monitor['id']), '-a', name)
-    # Drop only unused default desktops. Never reset/rename live desktops on reload.
-    for monitor in monitors:
-        for desktop in monitor['desktops']:
-            if desktop['name'] == 'Desktop' and desktop['root'] is None:
-                bsp('desktop', str(desktop['id']), '-r', check=False)
+    # Re-query after additions. A hotplugged monitor may have only Desktop;
+    # bspwm cannot remove its last desktop, so reuse a free numbered slot.
+    world = json.loads(bsp('wm', '-d'))
+    defaults = [d['id'] for m in world['monitors'] for d in m['desktops']
+                if d['name'] == 'Desktop']
+    for desktop_id in defaults:
+        world = json.loads(bsp('wm', '-d'))
+        owner = next(m for m in world['monitors'] if any(d['id'] == desktop_id for d in m['desktops']))
+        desktop = next(d for d in owner['desktops'] if d['id'] == desktop_id)
+        if desktop['root'] is None and len(owner['desktops']) > 1:
+            bsp('desktop', str(desktop_id), '-r')
+            continue
+        free = next(((m, d) for m in world['monitors'] for d in m['desktops']
+                     if d['name'] == '10'
+                     and d['root'] is None and len(m['desktops']) > 1), None)
+        if free:
+            _, replacement = free
+            # Removing an empty slot and renaming preserves all live trees,
+            # including windows already opened on the default desktop.
+            bsp('desktop', str(replacement['id']), '-r')
+            bsp('desktop', str(desktop_id), '-n', replacement['name'])
+        else:
+            # Never steal an occupied workspace or leave a monitor without one.
+            names = {d['name'] for m in world['monitors'] for d in m['desktops']}
+            number = next(n for n in range(11, len(names) + 12) if str(n) not in names)
+            bsp('desktop', str(desktop_id), '-n', str(number))
 
 
 def scroll(direction):
