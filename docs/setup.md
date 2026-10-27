@@ -58,7 +58,7 @@ APT installs the packages' library dependencies automatically.
 | `i3-wm` | Window manager; also supplies `i3-msg` and `i3-nagbar`. |
 | `polybar` | Optional fallback bar. |
 | `rofi` | Default application launcher and `greenpower.sh` power menu. |
-| `picom` | Compositor configured in `.config/picom/picom.conf`. |
+| `picom` | Distribution compositor fallback; smooth tiling uses upstream Picom 13 via Nix (see below). |
 | `kitty`, `thunar`, `mpv` | Terminal and file-manager shortcuts; configured media player. |
 | `dex` | Starts XDG autostart applications when i3 starts. |
 | `xss-lock`, `i3lock` | Screen locking, including before suspend. |
@@ -128,14 +128,73 @@ the command above alone does not satisfy these editor version requirements.
 - **Session utilities:** `xinit` is optional if you start X11 with `startx`
   instead of a display manager. `libpam-gnome-keyring` is optional for keyring
   unlocking at login; `tree` is used by the maintenance example below.
-- **Compositor startup:** i3 does not explicitly launch Picom. Start `picom`
-  through your session's autostart mechanism to apply its configured effects.
+- **Compositor startup:** i3 launches `.config/picom/start.sh`. It prefers the
+  isolated upstream build described below, then falls back to the distribution
+  `picom`. Disable other Picom autostarts so they do not race for the display.
 - **Monitor access:** `.config/polybar/monitor-brightness.sh` hardcodes I2C bus
   `3`. Adjust it for your display, enable DDC/CI on the monitor, and ensure your
   user can access the appropriate `/dev/i2c-*` device (with `i2c-dev` loaded).
 - **Authentication agent:** check the hardcoded
   `/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1` path if using
   a different distribution or authentication-agent package.
+
+### Picom and smooth tiling
+
+i3 changes tile sizes and positions immediately when a window opens, closes, or
+moves. The distribution's Picom **10.2** can fade windows but cannot animate
+those geometry changes. This setup uses upstream **Picom 13** to animate existing
+window frames over **200 ms**, retaining the desktop's purple rounded borders.
+The animation is visual; i3 still applies the final layout immediately.
+
+With Nix and nixGL available (the same runtime used for Quickshell), install the
+upstream build in your regular Nix profile:
+
+```sh
+nix profile install nixpkgs#picom
+```
+
+Picom is managed alongside your other profile packages. Run `nix profile upgrade
+picom` to update just Picom, or `nix profile upgrade --all` to update all profile
+packages. The version validated on this machine is **v13**. Upgrades take effect when Picom restarts,
+including at your next login. Keep the Nix profile's `bin` directory before
+`/usr/bin` in `PATH`, so it takes precedence over the APT package.
+
+At login, i3 starts `start.sh`, which selects `picom` from `PATH` and uses nixGL
+to reach the host graphics driver. If the profile package is absent, `PATH` can
+select the distribution fallback, which keeps the theme and lockscreen but has no
+geometry animation. Only one compositor can own a display. To start manually,
+first stop its existing compositor, then run:
+
+```sh
+sh "$HOME/.config/picom/start.sh" --daemon
+```
+
+Check the selected build with `command -v picom` and `picom --version`. Plain
+`/usr/bin/picom --version` still reports the untouched APT version.
+
+The `animations` group in the `i3-frame` rule of `picom.conf` uses upstream's
+[`geometry-change` preset](https://picom.app/#_presets). Adjust its `duration`
+(in seconds) to tune the transition, or remove that group to restore immediate
+geometry changes. Picom calls geometry animations experimental; the preset
+briefly scales and blends window contents during resizing. This also applies
+when dragging/resizing a framed window and when the bar changes the tile area.
+The Quickshell dock windows and i3lock are outside that frame rule, so their
+own animations and authentication feedback are retained. Fullscreen windows
+remain square-cornered.
+
+The launcher selects modern `picom.conf` for Picom 12+ or `legacy.conf` for
+older versions. Both include `common.conf` for the shared visual settings.
+The modern configuration uses only `rules` and untyped `WM_CLASS` matches;
+the fallback retains the exclusion lists and shader syntax required by Picom 10.
+This avoids deprecated syntax and conflicting-rule warnings on Picom 13 while
+preserving the bar, blur, borders, and lockscreen in both versions.
+`--diagnostics` also probes EGL and may report that backend as experimental;
+normal startup uses the configured GLX backend.
+
+Validation included Picom 13 diagnostics, non-takeover debug rendering, and an
+actual tiled Kitty open/close cycle recorded at 60 fps. Frame inspection showed
+intermediate tile positions and sizes, with no compositor rendering errors.
+The live bar's reservation behavior is checked separately as described below.
 
 ### Quickshell
 

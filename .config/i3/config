@@ -42,6 +42,9 @@ exec_always --no-startup-id feh --bg-fill ~/.config/i3/wall.jpg
 
 # Quickshell auto-hides at the top edge and starts its legacy tray bridge.
 exec --no-startup-id nixGL quickshell --no-duplicate
+# Geometry animation requires Picom 12+ from the regular Nix profile.
+# The launcher resolves picom from PATH and uses nixGL for the host driver.
+exec --no-startup-id sh "$HOME/.config/picom/start.sh"
 # Polybar fallback: stop Quickshell first, swap these startup lines, and set
 # `gaps top 38` below. Both bars cannot own the legacy tray at the same time.
 # exec --no-startup-id polybar --reload --config="$HOME/.config/polybar/config.ini" example

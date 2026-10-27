@@ -63,7 +63,7 @@ show the idle and simulated typing states.
 ## What's included
 
 - **i3:** dwindle autotiling, gaps, and rounded purple borders.
-- **Picom + kitty:** blur, shadows, and Catppuccin Mocha terminal colors.
+- **Picom + kitty:** animated tile resizing with upstream Picom 13, blur, shadows, and Catppuccin Mocha terminal colors.
 - **Lockscreen:** a Superman shield on a spinning purple ball animated by Picom, with native i3lock authentication.
 - **Rofi:** default application launcher and a power menu with confirmation prompts.
 - **Polybar:** a fallback bar with audio and brightness controls.
