@@ -1,0 +1,12 @@
+#!/bin/sh
+
+case " $(cat /proc/cmdline) " in
+    *" display_profile=hdmi "*)
+        xrandr --output HDMI-1-0 --primary --auto --pos 0x0 \
+               --output eDP-1 --off
+        ;;
+    *)
+        xrandr --output eDP-1 --primary --auto --pos 0x0 \
+               --output HDMI-1-0 --auto --right-of eDP-1
+        ;;
+esac
