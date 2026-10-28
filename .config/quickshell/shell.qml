@@ -26,6 +26,7 @@ ShellRoot {
     readonly property int charge: Math.round(battery.percentage * 100)
 
     ResourceMonitor { id: systemMonitor }
+    WorkspaceSwitcher { id: workspaceSwitcher; backend: desktopBackend.item }
     IpcHandler {
         target: "desktop"
         function launcher(): void {
@@ -33,10 +34,13 @@ ShellRoot {
             Quickshell.execDetached(["rofi", "-show", "drun"]);
         }
         function monitor(): void {
+            workspaceSwitcher.cancel();
             if (systemMonitor.visible) systemMonitor.visible = false;
             else systemMonitor.open();
         }
-        function close(): void { systemMonitor.visible = false; }
+        function workspaceNext(): void { systemMonitor.visible = false; workspaceSwitcher.cycle(1); }
+        function workspacePrevious(): void { systemMonitor.visible = false; workspaceSwitcher.cycle(-1); }
+        function close(): void { systemMonitor.visible = false; workspaceSwitcher.cancel(); }
     }
 
     // Own the XEmbed bridge with the shell, so it also stops when the shell exits.

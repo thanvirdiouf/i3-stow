@@ -52,6 +52,27 @@ def desktops():
             bsp('desktop', str(desktop_id), '-n', str(number))
 
 
+def occupied_target(world, direction):
+    """Cycle occupied desktops on the focused monitor, including from an empty one."""
+    monitor = next(m for m in world['monitors'] if m['id'] == world['focusedMonitorId'])
+    desktops = monitor['desktops']
+
+    def occupied(node):
+        if not node or node.get('hidden', False):
+            return False
+        if node.get('client') is not None:
+            return True
+        return occupied(node.get('firstChild')) or occupied(node.get('secondChild'))
+
+    current = next(i for i, d in enumerate(desktops) if d['id'] == monitor['focusedDesktopId'])
+    step = -1 if direction == 'prev' else 1
+    for distance in range(1, len(desktops)):
+        desktop = desktops[(current + step * distance) % len(desktops)]
+        if occupied(desktop['root']):
+            return str(desktop['id'])
+    return None
+
+
 def scroll(direction):
     runtime = Path(os.environ.get('XDG_RUNTIME_DIR', '/tmp'))
     display = os.environ.get('DISPLAY', 'default').replace('/', '_')
@@ -65,7 +86,9 @@ def scroll(direction):
         state.write(str(now))
         state.flush()
         if not previous or now - float(previous) >= .35:
-            bsp('desktop', '-f', f'{direction}.local', check=False)
+            target = occupied_target(json.loads(bsp('wm', '-d')), direction)
+            if target:
+                bsp('desktop', '-f', target, check=False)
 
 
 def resize(direction):

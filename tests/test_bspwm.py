@@ -20,6 +20,30 @@ actions = load('bspwm_actions', '.config/bspwm/actions.py')
 
 
 class BspwmExperience(unittest.TestCase):
+    def test_occupied_cycle_skips_empty_desktops_wraps_and_stays_on_monitor(self):
+        desktops = [dict(id=i, root={'client': {}} if i in (1, 3, 7) else None)
+                    for i in range(1, 9)]
+        world = dict(focusedMonitorId=1, monitors=[
+            dict(id=1, focusedDesktopId=3, desktops=desktops),
+            dict(id=2, focusedDesktopId=10, desktops=[dict(id=10, root={'client': {}})])])
+        self.assertEqual(actions.occupied_target(world, 'prev'), '1')
+        self.assertEqual(actions.occupied_target(world, 'next'), '7')
+        world['monitors'][0]['focusedDesktopId'] = 7
+        self.assertEqual(actions.occupied_target(world, 'next'), '1')
+        world['monitors'][0]['focusedDesktopId'] = 1
+        self.assertEqual(actions.occupied_target(world, 'prev'), '7')
+        world['monitors'][0]['focusedDesktopId'] = 4
+        self.assertEqual(actions.occupied_target(world, 'prev'), '3')
+        self.assertEqual(actions.occupied_target(world, 'next'), '7')
+
+    def test_occupied_cycle_is_noop_for_empty_or_only_current_desktop(self):
+        world = dict(focusedMonitorId=1, monitors=[dict(id=1, focusedDesktopId=1, desktops=[
+            dict(id=1, root={'client': {}}), dict(id=2, root=None),
+            dict(id=3, root={'client': {}, 'hidden': True})])])
+        self.assertIsNone(actions.occupied_target(world, 'next'))
+        world['monitors'][0]['desktops'][0]['root'] = None
+        self.assertIsNone(actions.occupied_target(world, 'prev'))
+
     def test_utility_matching_and_monitor_decoration(self):
         for name in ('Pavucontrol', 'org.localsend.localsend_app', 'org.kde.kdeconnect.app'):
             self.assertEqual(rules.consequences(name, 'Settings'), 'state=floating center=on')

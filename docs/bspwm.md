@@ -52,7 +52,8 @@ within one second, including title changes that bspwm does not publish.
 | Super+Shift+arrows or J/K/L/semicolon | Swap toward that direction, or move to the next monitor at the edge |
 | Super+1…9 / 0 | Focus globally named desktop 1…10 |
 | Super+Shift+1…9 / 0 | Move the window to desktop 1…10 without following |
-| Super+horizontal wheel | Cycle desktops on the current monitor, once per scroll burst |
+| Super+wheel up / down | Previous / next occupied desktop on the current monitor, wrapping at either end |
+| Alt+Tab / Alt+Shift+Tab | Open the workspace switcher and cycle forward / backward while Alt is held |
 | Alt+Enter | Toggle fullscreen, restoring the prior state |
 | Super+W / Space | Toggle floating / focus the other floating-or-tiled group |
 | Super+S | Monocle view of the current desktop |
@@ -71,6 +72,31 @@ Additional native tree controls: **Super+Ctrl+B** balances the desktop;
 **Super+Ctrl+arrows** toggles a placement preselection, and **Super+Ctrl+Space**
 cancels it. sxhkd's resize chain runs in the existing hotkey daemon; its wrapper
 exports the correct PID on sxhkd 0.6.2 so exits and reloads target that instance.
+
+### Quickshell workspace switcher
+
+Hold Alt and press Tab to open the rounded Dracula panel. It lists occupied
+workspaces across monitors, plus your current workspace even when empty.
+The current workspace starts first, followed by recently used workspaces;
+the candidate list stays fixed during the gesture. Cards show workspace and
+monitor names, application names, and a schematic of their window layout.
+Repeated Tab advances; Alt+Shift+Tab reverses. Release both Alt keys to switch,
+or press Escape to cancel without changing workspaces. Clicking a card selects
+it as well. A stationary pointer never changes the keyboard selection.
+
+The short-lived `alt-release.py` helper observes X11 key state only while the
+panel is open. It handles quick taps whose Alt release happens before the
+asynchronous IPC call maps the window, without globally intercepting Alt itself.
+The panel opens on the focused monitor, floats above applications, and does not
+change the workspace until selection is committed.
+
+Super+wheel is a separate sxhkd action: it works even if Quickshell is stopped.
+Vertical wheel up/down and horizontal wheel left/right select previous/next
+occupied desktops on the focused monitor, skipping empty and hidden-only
+desktops and wrapping around. From an empty desktop, it finds the nearest
+occupied desktop in the requested direction. If there is no other occupied
+desktop, it does nothing. The existing 350 ms quiet interval groups touchpad
+momentum into one switch per scroll burst.
 
 ## Intentional differences
 

@@ -268,6 +268,12 @@ the linger in milliseconds (clamped to a minimum of 5000), and
 `barSlideDuration` controls both the bar and reservation animation (320 ms by
 default, with cubic easing at both ends).
 
+The bspwm session also binds **Alt+Tab** to a Quickshell workspace switcher.
+Hold Alt to cycle recently used occupied workspaces, then release it to commit;
+Shift reverses and Escape cancels. Its colors and rounded cards use the same
+`Theme.qml`. See the [switcher and independent wheel controls](bspwm.md#quickshell-workspace-switcher)
+for the complete behavior.
+
 Live i3/X11 checks covered edge reveal, sustained button hover, the full
 five-second linger, re-entry resetting the timer, and clock/tray interactions
 without taking keyboard focus. Sampling i3's dock area confirmed intermediate

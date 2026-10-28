@@ -8,11 +8,11 @@ case "${1:-}" in
     launcher)
         exec rofi -show drun
         ;;
-    monitor)
+    monitor|workspaceNext|workspacePrevious)
         if quickshell ipc --path "$config_dir/shell.qml" call desktop "$1" 2>/dev/null; then
             exit 0
         fi
-        exec i3-nagbar -t warning -m 'Start Quickshell to open the system monitor.'
+        exec i3-nagbar -t warning -m 'Start Quickshell to open the desktop panel.'
         ;;
-    *) printf '%s\n' 'Usage: control.sh launcher|monitor' >&2; exit 2 ;;
+    *) printf '%s\n' 'Usage: control.sh launcher|monitor|workspaceNext|workspacePrevious' >&2; exit 2 ;;
 esac

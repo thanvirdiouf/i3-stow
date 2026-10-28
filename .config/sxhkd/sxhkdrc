@@ -30,8 +30,15 @@ super + {1-9,0}
     bspc desktop -f {1-9,10}
 super + shift + {1-9,0}
     bspc node -d {1-9,10}
-super + {button7,button6}
-    python3 "$HOME/.config/bspwm/actions.py" scroll {prev,next}
+# Vertical wheel and horizontal wheel: skip empty desktops on this monitor.
+super + {button4,button5,button6,button7}
+    python3 "$HOME/.config/bspwm/actions.py" scroll {prev,next,prev,next}
+
+# Hold Alt to keep the Quickshell workspace switcher open; release to select.
+alt + Tab
+    sh "$HOME/.config/quickshell/control.sh" workspaceNext
+alt + shift + Tab
+    sh "$HOME/.config/quickshell/control.sh" workspacePrevious
 
 alt + Return
     bspc node -t '~fullscreen'

@@ -9,6 +9,8 @@ FLOATING = re.compile(r"^(localsend(_app)?|org\.localsend\.localsend_app|gedit|o
 
 
 def consequences(class_name, title):
+    if title == "Spectre · Workspaces":
+        return "state=floating center=on border=off layer=above"
     if title in ("Spectre · Applications", "Spectre · System Monitor"):
         return "state=floating center=on border=off"
     if FLOATING.fullmatch(class_name):

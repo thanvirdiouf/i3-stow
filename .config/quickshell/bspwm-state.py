@@ -20,13 +20,31 @@ def leaves(node):
 def model(world):
     workspaces = []
     focused = 0
+    recency = {entry['desktopId']: index for index, entry in enumerate(world.get('focusHistory', []))}
     for monitor in world['monitors']:
         for desktop in monitor['desktops']:
             nodes = leaves(desktop.get('root'))
             name = desktop['name']
+            rect = monitor.get('rectangle', dict(x=0, y=0, width=1920, height=1080))
+            windows = []
+            for node in nodes:
+                if node.get('hidden', False):
+                    continue
+                client = node['client']
+                geometry = client.get('floatingRectangle' if client.get('state') == 'floating' else 'tiledRectangle',
+                                      node.get('rectangle', rect))
+                if client.get('state') == 'fullscreen':
+                    geometry = rect
+                windows.append(dict(app=client.get('className') or 'Window',
+                                    x=(geometry['x'] - rect['x']) / max(1, rect['width']),
+                                    y=(geometry['y'] - rect['y']) / max(1, rect['height']),
+                                    width=geometry['width'] / max(1, rect['width']),
+                                    height=geometry['height'] / max(1, rect['height'])))
             workspaces.append(dict(name=name, number=int(name) if name.isdigit() else -1,
                                    active=desktop['id'] == monitor['focusedDesktopId'],
-                                   occupied=bool(nodes), urgent=any(n['client'].get('urgent', False) for n in nodes),
+                                   focused=monitor['id'] == world['focusedMonitorId'] and desktop['id'] == monitor['focusedDesktopId'],
+                                   recency=recency.get(desktop['id'], -1), windows=windows,
+                                   occupied=bool(windows), urgent=any(n['client'].get('urgent', False) for n in nodes),
                                    monitor=dict(name=monitor['name'])))
             if monitor['id'] == world['focusedMonitorId'] and desktop['id'] == monitor['focusedDesktopId']:
                 focused = desktop.get('focusedNodeId', 0)

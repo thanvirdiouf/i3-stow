@@ -29,6 +29,18 @@ Rofi launcher.
 Run with `nixGL quickshell`. See the [Quickshell setup notes](docs/setup.md#quickshell)
 for dependencies, the legacy tray bridge, and switching back to Polybar.
 
+## Workspace switcher
+
+In bspwm, hold **Alt** and press **Tab** to browse occupied workspaces plus the
+current one, ordered by recent use. Press Tab again to advance, add Shift to
+reverse, release Alt to switch, or press Escape to cancel. The cards show app
+names, monitor names, and a miniature layout.
+
+![Quickshell workspace switcher with rounded Dracula cards and purple selection](docs/screenshots/quickshell-workspaces.png)
+
+**Super+wheel** works independently: up selects the previous occupied workspace
+on the current monitor, down selects the next, and both directions wrap.
+
 ## System monitor
 
 ![CPU, GPU and VRAM, memory, temperatures, disk, network, and processes](docs/screenshots/quickshell-monitor.png)
