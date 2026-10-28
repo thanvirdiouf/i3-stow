@@ -31,9 +31,9 @@ for dependencies, the legacy tray bridge, and switching back to Polybar.
 
 ## Workspace switcher
 
-In bspwm, hold **Alt** and press **Tab** to browse occupied workspaces plus the
+In bspwm, hold **Super** and press **Tab** to browse occupied workspaces plus the
 current one, ordered by recent use. Press Tab again to advance, add Shift to
-reverse, release Alt to switch, or press Escape to cancel. The cards show app
+reverse, release Super to switch, or press Escape to cancel. The cards show app
 names, monitor names, and a miniature layout.
 
 ![Quickshell workspace switcher with rounded Dracula cards and purple selection](docs/screenshots/quickshell-workspaces.png)

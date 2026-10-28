@@ -20,9 +20,9 @@ super + q
 super + {j,k,u,semicolon,Left,Down,Up,Right}
     bspc node -f {west,south,north,east,west,south,north,east}
 # Cycle also works in monocle, where windows occupy the same rectangle.
-super + Tab
+super + ctrl + Tab
     bspc node -f next.local.!hidden.window
-super + shift + Tab
+super + ctrl + shift + Tab
     bspc node -f prev.local.!hidden.window
 super + shift + {j,k,l,semicolon,Left,Down,Up,Right}
     bspc node -s {west,south,north,east,west,south,north,east} --follow || bspc node -m {west,south,north,east,west,south,north,east} --follow
@@ -34,10 +34,10 @@ super + shift + {1-9,0}
 super + {button4,button5,button6,button7}
     python3 "$HOME/.config/bspwm/actions.py" scroll {prev,next,prev,next}
 
-# Hold Alt to keep the Quickshell workspace switcher open; release to select.
-alt + Tab
+# Hold Super to keep the Quickshell workspace switcher open; release to select.
+super + Tab
     sh "$HOME/.config/quickshell/control.sh" workspaceNext
-alt + shift + Tab
+super + shift + Tab
     sh "$HOME/.config/quickshell/control.sh" workspacePrevious
 
 alt + Return

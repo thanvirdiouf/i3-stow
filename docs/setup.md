@@ -268,8 +268,8 @@ the linger in milliseconds (clamped to a minimum of 5000), and
 `barSlideDuration` controls both the bar and reservation animation (320 ms by
 default, with cubic easing at both ends).
 
-The bspwm session also binds **Alt+Tab** to a Quickshell workspace switcher.
-Hold Alt to cycle recently used occupied workspaces, then release it to commit;
+The bspwm session also binds **Super+Tab** to a Quickshell workspace switcher.
+Hold Super to cycle recently used occupied workspaces, then release it to commit;
 Shift reverses and Escape cancels. Its colors and rounded cards use the same
 `Theme.qml`. See the [switcher and independent wheel controls](bspwm.md#quickshell-workspace-switcher)
 for the complete behavior.

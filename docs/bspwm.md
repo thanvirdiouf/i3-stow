@@ -53,11 +53,11 @@ within one second, including title changes that bspwm does not publish.
 | Super+1…9 / 0 | Focus globally named desktop 1…10 |
 | Super+Shift+1…9 / 0 | Move the window to desktop 1…10 without following |
 | Super+wheel up / down | Previous / next occupied desktop on the current monitor, wrapping at either end |
-| Alt+Tab / Alt+Shift+Tab | Open the workspace switcher and cycle forward / backward while Alt is held |
+| Super+Tab / Super+Shift+Tab | Open the workspace switcher and cycle forward / backward while Super is held |
 | Alt+Enter | Toggle fullscreen, restoring the prior state |
 | Super+W / Space | Toggle floating / focus the other floating-or-tiled group |
 | Super+S | Monocle view of the current desktop |
-| Super+Tab / Super+Shift+Tab | Cycle windows forward / backward, including in monocle |
+| Super+Ctrl+Tab / Super+Ctrl+Shift+Tab | Cycle windows forward / backward, including in monocle |
 | Super+V | Return to tiling and rotate the focused split by 90 degrees |
 | Super+R, then arrows or J/K/L/semicolon | Repeated resizing; Enter, Escape, or Super+R exits |
 | Super+Shift+D | Switch longest-side / alternating insertion |
@@ -75,18 +75,18 @@ exports the correct PID on sxhkd 0.6.2 so exits and reloads target that instance
 
 ### Quickshell workspace switcher
 
-Hold Alt and press Tab to open the rounded Dracula panel. It lists occupied
+Hold Super and press Tab to open the rounded Dracula panel. It lists occupied
 workspaces across monitors, plus your current workspace even when empty.
 The current workspace starts first, followed by recently used workspaces;
 the candidate list stays fixed during the gesture. Cards show workspace and
 monitor names, application names, and a schematic of their window layout.
-Repeated Tab advances; Alt+Shift+Tab reverses. Release both Alt keys to switch,
+Repeated Tab advances; Super+Shift+Tab reverses. Release both Super keys to switch,
 or press Escape to cancel without changing workspaces. Clicking a card selects
 it as well. A stationary pointer never changes the keyboard selection.
 
-The short-lived `alt-release.py` helper observes X11 key state only while the
-panel is open. It handles quick taps whose Alt release happens before the
-asynchronous IPC call maps the window, without globally intercepting Alt itself.
+The short-lived `super-release.py` helper observes X11 key state only while the
+panel is open. It handles quick taps whose Super release happens before the
+asynchronous IPC call maps the window, without globally intercepting Super itself.
 The panel opens on the focused monitor, floats above applications, and does not
 change the workspace until selection is committed.
 
@@ -101,7 +101,7 @@ momentum into one switch per scroll burst.
 ## Intentional differences
 
 - Monocle is bspwm's focused-stack experience. It does not imitate i3 container
-  stacks or tab decorations. Use Super+Tab / Super+Shift+Tab to cycle its windows.
+  stacks or tab decorations. Use Super+Ctrl+Tab / Super+Ctrl+Shift+Tab to cycle its windows.
 - Longest-side insertion is native and always automatic. Super+Shift+D changes
   the insertion scheme; it does not suspend an external helper.
 - On first setup, desktops 1–10 are spread across the currently connected

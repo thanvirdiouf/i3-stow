@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Observe both Alt keys on X11 without grabbing shortcuts used by other apps.
+"""Observe both Super keys on X11 without grabbing shortcuts used by other apps.
 
 Runs only while the switcher is open. Querying key state also handles a quick
-Alt+Tab whose Alt release precedes the asynchronous IPC/window-map operation.
+Super+Tab whose Super release precedes the asynchronous IPC/window-map operation.
 """
 import ctypes
 import ctypes.util
@@ -24,9 +24,9 @@ def main():
     x11.XCloseDisplay.argtypes = [ctypes.c_void_p]
     display = x11.XOpenDisplay(None)
     if not display:
-        raise SystemExit('Cannot observe Alt keys without an X11 display')
+        raise SystemExit('Cannot observe Super keys without an X11 display')
     try:
-        keys = [x11.XKeysymToKeycode(display, key) for key in (0xffe9, 0xffea)]
+        keys = [x11.XKeysymToKeycode(display, key) for key in (0xffeb, 0xffec)]
         keymap = (ctypes.c_ubyte * 32)()
         while True:
             x11.XQueryKeymap(display, keymap)

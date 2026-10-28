@@ -14,21 +14,21 @@ def load(name, path):
     return module
 
 
-alt = load('alt_release', '.config/quickshell/alt-release.py')
+modifier = load('super_release', '.config/quickshell/super-release.py')
 state = load('switcher_state', '.config/quickshell/bspwm-state.py')
 
 
 class WorkspaceSwitcher(unittest.TestCase):
-    def test_releasing_one_alt_does_not_commit_while_other_is_held(self):
+    def test_releasing_one_super_does_not_commit_while_other_is_held(self):
         keymap = bytearray(32)
         keymap[64 // 8] |= 1 << (64 % 8)
         keymap[108 // 8] |= 1 << (108 % 8)
-        self.assertTrue(alt.held(keymap, [64, 108]))
+        self.assertTrue(modifier.held(keymap, [64, 108]))
         keymap[64 // 8] = 0
-        self.assertTrue(alt.held(keymap, [64, 108]))
+        self.assertTrue(modifier.held(keymap, [64, 108]))
         keymap[108 // 8] = 0
-        self.assertFalse(alt.held(keymap, [64, 108]))
-        self.assertFalse(alt.held(bytearray([255]) + bytearray(31), [0]))
+        self.assertFalse(modifier.held(keymap, [64, 108]))
+        self.assertFalse(modifier.held(bytearray([255]) + bytearray(31), [0]))
 
     def test_preview_geometry_is_relative_to_monitor_and_history_tracks_recent_use(self):
         monitor = dict(id=1, name='HDMI-1', focusedDesktopId=10,

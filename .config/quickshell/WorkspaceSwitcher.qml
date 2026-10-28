@@ -26,7 +26,7 @@ FloatingWindow {
         const available = backend.workspaces.filter(w => w.focused || w.occupied !== false);
         if (available.length === 0) return;
         // Freeze the list for this gesture: mapping this window changes focus,
-        // and background applications may open or close while Alt is held.
+        // and background applications may open or close while Super is held.
         const current = available.find(w => w.focused) || available.find(w => w.active) || available[0];
         choices = available.map(w => ({
             name: w.name, number: w.number, monitor: w.monitor ? w.monitor.name : "",
@@ -50,7 +50,7 @@ FloatingWindow {
     onClosed: cancel()
 
     Process {
-        command: ["python3", Quickshell.shellPath("alt-release.py")]
+        command: ["python3", Quickshell.shellPath("super-release.py")]
         running: root.visible
         stdout: SplitParser { onRead: data => { if (data === "released") root.accept(); } }
         onExited: exitCode => { if (exitCode !== 0 && root.visible) root.cancel(); }
@@ -208,13 +208,13 @@ FloatingWindow {
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom; margins: 26 }
             Text {
                 visible: root.width >= 600
-                text: "Alt + Tab  next     Shift  reverse"
+                text: "Super + Tab  next     Shift  reverse"
                 color: Theme.muted
                 font { family: Theme.font; pixelSize: 11 }
             }
             Item { Layout.fillWidth: true }
             Text {
-                text: "Release Alt to switch · Esc to cancel"
+                text: "Release Super to switch · Esc to cancel"
                 color: Theme.muted
                 font { family: Theme.font; pixelSize: 11 }
             }
