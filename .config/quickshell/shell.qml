@@ -301,9 +301,9 @@ ShellRoot {
                                 required property var modelData
                                 implicitWidth: 28
                                 hint: modelData.tooltipTitle || modelData.title || modelData.id
-                                IconImage {
+                                TrayIcon {
                                     anchors.centerIn: parent
-                                    implicitSize: Theme.iconSize
+                                    itemId: trayButton.modelData.id
                                     source: trayButton.modelData.icon
                                 }
                                 onClicked: mouse => {

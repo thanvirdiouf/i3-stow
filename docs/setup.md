@@ -211,6 +211,10 @@ The default session uses Quickshell. The config in `.config/quickshell`
 was tested with **Quickshell 0.3.2** under i3/X11 and bspwm in Xephyr using `nixGL quickshell`.
 It uses the same Dracula colors as i3/Rofi, rounded surfaces, and the bundled
 JetBrains Mono Nerd Font. Edit `Theme.qml` for colors, sizing, and spacing.
+Symbolic and known system-status tray icons use a light treatment for contrast.
+Custom application icons, including ChatGPT and XDM, retain their original colors.
+Edit `lightTrayItemIds` in `Theme.qml` to choose which status items are lightened,
+or set `lightTrayIcons` to `false` to restore all original colors.
 The Qt cursor uses **Bibata-Modern-Ice**, matching GTK. Install that cursor theme
 under `/usr/share/icons` or `/usr/local/share/icons`, or adjust the `XCURSOR_THEME`
 and `XCURSOR_PATH` pragmas at the top of `shell.qml`. Cursor changes require a

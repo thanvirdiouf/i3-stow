@@ -20,6 +20,9 @@ QtObject {
     readonly property string font: "JetBrainsMono Nerd Font"
     readonly property int fontSize: 14
     readonly property int iconSize: 18
+    readonly property bool lightTrayIcons: true
+    readonly property var lightTrayItemIds: ["blueman", "kde connect indicator", "nvidia-prime",
+        "mintupdate.py", "networkmanager applet", "tray.py"]
     readonly property int barHeight: 38
     readonly property int topMargin: 6
     readonly property int barRevealHeight: 4
