@@ -4,18 +4,26 @@
 
 # Point to your custom theme
 THEME="$HOME/.config/rofi/config.rasi"
+WAKE_LOCK_UNIT="rofi-wake-lock.service"
 
 # Define menu options
 POWEROFF="⏻ Power Off"
 REBOOT="⟳ Reboot"
 SUSPEND="⏾ Suspend"
 LOGOUT="➜ Log Out"
+if systemctl --user is-active --quiet "$WAKE_LOCK_UNIT"; then
+  WAKE_LOCK="󰅶 Wake Lock On · Turn Off"
+  wake_lock_active=true
+else
+  WAKE_LOCK="󰅶 Wake Lock Off · Turn On"
+  wake_lock_active=false
+fi
 
 # 1. Display the main menu
 # Overrides window size to be smaller and disables the text entry field
-chosen=$(printf "%s\n%s\n%s\n%s" "$POWEROFF" "$REBOOT" "$SUSPEND" "$LOGOUT" | rofi -dmenu -i \
+chosen=$(printf '%s\n' "$POWEROFF" "$REBOOT" "$SUSPEND" "$LOGOUT" "$WAKE_LOCK" | rofi -dmenu -i -no-custom \
   -theme "$THEME" \
-  -theme-str 'mainbox {spacing: 1%;} window {width: 20%; height: 25%; background-image: none; padding: 1%;} entry {enabled: false;} listview {lines: 4;} element{padding: 1%;}' \
+  -theme-str 'mainbox {spacing: 1%;} window {width: calc(20% max 300px); height: 32%; background-image: none; padding: 1%;} entry {enabled: false;} listview {lines: 5;} element {padding: calc(1% + 4px) 1%;}' \
   -p "Power")
 
 # Exit immediately if the user escapes/cancels
@@ -34,6 +42,16 @@ confirm_action() {
 
 # 3. Execute the command based on the selection
 case "$chosen" in
+"$WAKE_LOCK")
+  if "$wake_lock_active"; then
+    systemctl --user stop "$WAKE_LOCK_UNIT" || rofi -e "Could not turn off the wake lock."
+  elif ! systemd-run --user --quiet --collect --unit="$WAKE_LOCK_UNIT" \
+    --service-type=notify --property=TimeoutStartSec=10s \
+    --setenv="DISPLAY=$DISPLAY" --setenv="XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}" \
+    -- python3 "$(dirname -- "${BASH_SOURCE[0]}")/wake-lock.py"; then
+    rofi -e "Could not turn on the wake lock."
+  fi
+  ;;
 "$POWEROFF")
   confirm_action "Power Off" && systemctl poweroff
   ;;
