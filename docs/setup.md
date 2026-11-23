@@ -23,6 +23,7 @@
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
 ├── docs                        # Setup guide and screenshots
+├── system/lightdm              # Optional system-wide login theme
 └── .local
     ├── bin                     # Local executable directory
     ├── opt/ast-grep             # Bundled ast-grep executables
@@ -146,6 +147,9 @@ the command above alone does not satisfy these editor version requirements.
 
 For the alternative session and its native layout choices, see the
 [bspwm guide](bspwm.md).
+
+For the graphical login screen, see the [LightDM guide](lightdm.md) for
+installation, customization, and rollback.
 
 ### Picom and smooth tiling
 
@@ -374,7 +378,7 @@ cd "$HOME/.dotfiles"
 stow --simulate --verbose --no-folding --target="$HOME" \
   --ignore='(^|/)(\.git|\.gitignore|\.agents|\.aws|\.codex)(/|$)' \
   --ignore='(^|/)(README|COPYING)\.md$' \
-  --ignore='^(docs|tests)(/|$)' \
+  --ignore='^(docs|system|tests)(/|$)' \
   --ignore='^\.local/share/nvim(/|$)' .
 ```
 
@@ -384,7 +388,7 @@ If the preview looks correct, apply it:
 stow --verbose --no-folding --target="$HOME" \
   --ignore='(^|/)(\.git|\.gitignore|\.agents|\.aws|\.codex)(/|$)' \
   --ignore='(^|/)(README|COPYING)\.md$' \
-  --ignore='^(docs|tests)(/|$)' \
+  --ignore='^(docs|system|tests)(/|$)' \
   --ignore='^\.local/share/nvim(/|$)' .
 ```
 

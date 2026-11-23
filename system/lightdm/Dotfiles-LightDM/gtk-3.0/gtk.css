@@ -1,0 +1,163 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+@import url("resource:///org/gtk/libgtk/theme/Adwaita/gtk-contained-dark.css");
+
+/* Let this GTK theme provide the greeter styles. High Contrast can still
+   replace the entire theme through the native accessibility menu. */
+@define-color lightdm-gtk-greeter-override-defaults transparent;
+
+/* Match .config/quickshell/Theme.qml. */
+@define-color greeter_base #282a36;
+@define-color greeter_surface #44475a;
+@define-color greeter_inset #21222c;
+@define-color greeter_text #f8f8f2;
+@define-color greeter_muted #8990ad;
+@define-color greeter_accent #bd93f9;
+@define-color greeter_border #694b8a;
+@define-color greeter_error #ff5555;
+
+#panel_window {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+#panel_window menubar,
+#login_window,
+#power_window {
+    background: @greeter_base;
+    color: @greeter_text;
+    border: 2px solid @greeter_border;
+    border-radius: 20px;
+    box-shadow: none;
+}
+
+#panel_window menubar {
+    margin: 6px 16px 0;
+    padding: 0 10px;
+    border: none;
+    box-shadow: inset 0 0 0 2px @greeter_border;
+}
+
+#panel_window menubar > menuitem,
+#panel_window menubar > separator {
+    min-height: 34px;
+    padding: 0 9px;
+    color: @greeter_text;
+}
+
+#panel_window menubar > #host_menuitem {
+    color: @greeter_muted;
+}
+
+#panel_window menubar > #clock_menuitem {
+    color: @greeter_accent;
+    font-weight: bold;
+}
+
+#panel_window menubar > menuitem:hover {
+    color: @greeter_accent;
+    background: @greeter_surface;
+    border-radius: 10px;
+}
+
+#login_window #content_frame {
+    padding-bottom: 12px;
+}
+
+#login_window frame > border {
+    border: none;
+}
+
+#user_image_border {
+    padding: 4px;
+    background: @greeter_inset;
+    border: 1px solid @greeter_border;
+    border-radius: 10px;
+}
+
+#greeter_infobar {
+    margin: 0 24px 10px;
+    border-radius: 8px;
+}
+
+#greeter_infobar.error {
+    background: @greeter_inset;
+    color: @greeter_error;
+    border: 1px solid @greeter_error;
+}
+
+#greeter_infobar.error revealer > box {
+    background: @greeter_inset;
+    color: @greeter_error;
+    border-radius: 8px;
+}
+
+#login_window entry,
+#login_window button,
+#power_window button {
+    background: @greeter_inset;
+    color: @greeter_text;
+    border: 1px solid @greeter_surface;
+    border-radius: 10px;
+    box-shadow: none;
+    text-shadow: none;
+    -gtk-icon-shadow: none;
+}
+
+#login_window entry placeholder {
+    color: @greeter_muted;
+}
+
+#login_window entry:focus,
+#login_window button:focus,
+#power_window button:focus {
+    border-color: @greeter_accent;
+}
+
+#login_window button:hover,
+#power_window button:hover {
+    background: @greeter_surface;
+}
+
+#login_window button:active,
+#power_window button:active {
+    border-color: @greeter_accent;
+}
+
+#login_window #login_button,
+#power_window #power_ok_button {
+    padding: 4px 18px;
+    background: @greeter_accent;
+    color: @greeter_inset;
+    font-weight: bold;
+}
+
+#login_window #login_button:hover,
+#power_window #power_ok_button:hover {
+    background: shade(@greeter_accent, 1.12);
+}
+
+#login_window #login_button:active,
+#power_window #power_ok_button:active {
+    background: shade(@greeter_accent, 0.90);
+}
+
+#login_window button:disabled,
+#power_window button:disabled {
+    background: @greeter_surface;
+    color: @greeter_muted;
+}
+
+menu {
+    padding: 4px;
+    background: @greeter_base;
+    color: @greeter_text;
+    border: 1px solid @greeter_border;
+    border-radius: 10px;
+}
+
+menu menuitem:hover {
+    background: @greeter_surface;
+    color: @greeter_accent;
+    border-radius: 6px;
+}

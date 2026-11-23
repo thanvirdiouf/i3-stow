@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=Dotfiles-LightDM
+Comment=Dracula theme for the LightDM GTK greeter
+
+[X-GNOME-Metatheme]
+GtkTheme=Dotfiles-LightDM
+IconTheme=ePapirus-Dark
+CursorTheme=Bibata-Modern-Ice

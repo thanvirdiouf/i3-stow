@@ -78,6 +78,7 @@ show the idle and simulated typing states.
 - **bspwm + sxhkd:** an alternative session with native longest-side tiling and the same applications, shortcuts, Quickshell bar, and lockscreen. See the [bspwm guide](docs/bspwm.md).
 - **Picom + kitty:** animated tile resizing with upstream Picom 13, blur, shadows, and Catppuccin Mocha terminal colors.
 - **Lockscreen:** a Superman shield on a spinning purple ball animated by Picom, with native i3lock authentication.
+- **LightDM:** the GTK login screen shares the desktop wallpaper, rounded Dracula panels, and JetBrains Mono. See the [LightDM guide](docs/lightdm.md).
 - **Rofi:** default application launcher and a power menu with confirmation prompts.
 - **Polybar:** a fallback bar with audio and brightness controls.
 - **Quickshell:** a floating bar and live resource monitor sharing the desktop's Dracula palette.
