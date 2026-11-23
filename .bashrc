@@ -46,3 +46,12 @@ alias xxx='xrandr --output HDMI-1-0 --mode 1920x1080 --primary --output eDP-1 --
 
 # Android development environment
 [ -f "$HOME/.config/android-development/env.sh" ] && . "$HOME/.config/android-development/env.sh"
+
+gh_as() (
+  set +x
+  account=$1
+  shift
+  token=$(env -u GH_TOKEN -u GITHUB_TOKEN \
+    gh auth token -h github.com -u "$account") || exit
+  GH_TOKEN="$token" gh "$@"
+)
