@@ -6,6 +6,16 @@
 /.local/bin/android-studio
 /.local/opt/android-studio/
 
+# Local application installs and launchers
+/.local/opt/ghidra_*/
+/.local/opt/jdk-*/
+/.local/bin/unity
+/.local/bin/matlab
+/.local/bin/mex
+/.local/bin/bitconnect
+
+# Fontconfig directory IDs
+/.local/share/fonts/**/.uuid
 
 # Python helper/test bytecode
 __pycache__/
