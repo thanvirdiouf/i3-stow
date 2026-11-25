@@ -1,28 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Regression coverage for desktop controls, lock handoff, and resource sampling."""
-import importlib.util
 import json
 import os
+import select
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SHELL = ROOT / ".config/quickshell"
-
-
-def load_module(name, filename):
-    spec = importlib.util.spec_from_file_location(name, SHELL / filename)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-resources = load_module("resources", "resources.py")
 
 
 class ControlPath(unittest.TestCase):
@@ -89,75 +78,142 @@ Path(os.environ['LOCK_TEST_CAPTURE']).write_text(json.dumps(result))
 
 
 class ResourceSnapshots(unittest.TestCase):
-    def test_nvidia_units_and_missing_values(self):
-        rows = resources.parse_nvidia_gpus(
-            '00000000:01:00.0, NVIDIA GeForce GTX 1650 Ti, 14, 47, 4096, 47\n'
-            '00000000:02:00.0, "NVIDIA GPU, secondary", [Not Supported], N/A, 8192, N/A\n'
-            'malformed row\n')
-        self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[0]["utilization"], 14)
-        self.assertEqual(rows[0]["memoryUsed"], 47 * 1024**2)
-        self.assertEqual(rows[0]["memoryTotal"], 4 * 1024**3)
-        self.assertEqual(rows[0]["temperature"], 47)
-        self.assertIsNone(rows[1]["utilization"])
-        self.assertIsNone(rows[1]["memoryUsed"])
-        self.assertIsNone(rows[1]["temperature"])
-        for invalid in ["nan", "inf", "-1", "[N/A]", "101"]:
-            self.assertIsNone(resources.gpu_number(invalid, 100))
+    @classmethod
+    def setUpClass(cls):
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        cls.root = Path(directory.name)
+        cls.proc, cls.sys = cls.root / "proc", cls.root / "sys"
+        cls.binary = cls.root / "resources"
+        flags = subprocess.check_output(["pkg-config", "--cflags", "--libs", "glib-2.0"], text=True).split()
+        subprocess.run(["cc", "-std=c11", "-Wall", "-Wextra", "-Werror", f'-DPROC_ROOT="{cls.proc}"',
+                        f'-DSYS_ROOT="{cls.sys}"', str(SHELL / "resources.c"), "-o", cls.binary,
+                        *flags, "-lm"], check=True)
 
-    def test_gpu_timeout_does_not_break_sampler(self):
-        with tempfile.TemporaryDirectory() as directory, \
-             patch.object(resources.shutil, "which", return_value="/usr/bin/nvidia-smi"), \
-             patch.object(resources.subprocess, "run", side_effect=subprocess.TimeoutExpired("nvidia-smi", 1)):
-            self.assertEqual(resources.gpu_stats(Path(directory)), [])
+    def setUp(self):
+        for path in (self.proc, self.sys, self.root / "bin"):
+            path.mkdir()
+            self.addCleanup(shutil.rmtree, path)
+        self.env = dict(os.environ, PATH=f"{self.root}/bin:/usr/bin:/bin")
+        self.write(self.proc / "meminfo", "MemTotal: 1000 kB\nMemAvailable: 250 kB\nSwapTotal: 100 kB\nSwapFree: 40 kB")
+        self.write(self.proc / "stat", "cpu 100 0 0 100 0 0 0 0\ncpu0 100 0 0 100 0 0 0 0\n")
+        self.write(self.proc / "net/dev", "lo: 123 0 0 0 0 0 0 0 123\neth0: 300 0 0 0 0 0 0 0 200")
+        self.write(self.proc / "uptime", "123.5 100")
+        self.fake_smi("exit 1")
 
-    def test_amd_sysfs_gpu_and_unreadable_fields(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            device = root / "card0/device"
-            hwmon = device / "hwmon/hwmon0"
-            hwmon.mkdir(parents=True)
-            for name, value in {"vendor": "0x1002", "product_name": "AMD Radeon fixture",
-                                "gpu_busy_percent": "32", "mem_info_vram_used": "1073741824",
-                                "mem_info_vram_total": "8589934592"}.items():
-                (device / name).write_text(value)
-            (hwmon / "temp1_input").write_text("52000")
-            with patch.object(resources.shutil, "which", return_value=None):
-                gpu = resources.gpu_stats(root)[0]
-                self.assertEqual(gpu["utilization"], 32)
-                self.assertEqual(gpu["memoryTotal"], 8 * 1024**3)
-                self.assertEqual(gpu["temperature"], 52)
-                (device / "gpu_busy_percent").write_text("not available")
-                self.assertIsNone(resources.gpu_stats(root)[0]["utilization"])
+    @staticmethod
+    def write(path, text):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
 
-    def test_temperatures_classify_sensors_and_skip_invalid_readings(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            fixtures = [("coretemp", {"temp1_input": "49000", "temp2_input": "51000", "temp3_input": "invalid"}),
-                        ("nvme", {"temp1_label": "Composite", "temp1_input": "48850", "temp2_input": "99000"}),
-                        ("nvme", {"temp1_label": "Composite", "temp1_input": "52000"}),
-                        ("pch_cometlake", {"temp1_input": "53000"}),
-                        ("amdgpu", {"temp1_input": "47000"}),
-                        ("iwlwifi_1", {"temp1_input": "70000"})]
-            for index, (name, files) in enumerate(fixtures):
-                device = root / f"hwmon{index}"
-                device.mkdir()
-                (device / "name").write_text(name)
-                for filename, value in files.items():
-                    (device / filename).write_text(value)
-            self.assertEqual(resources.temperatures(root),
-                             {"cpu": 51, "gpu": 47, "storage": 52, "chipset": 53})
-            self.assertEqual(resources.temperatures(root / "missing"),
-                             {"cpu": None, "gpu": None, "storage": None, "chipset": None})
+    def fake_smi(self, body):
+        path = self.root / "bin/nvidia-smi"
+        self.write(path, "#!/bin/sh\n" + body + "\n")
+        path.chmod(0o755)
 
-    def test_live_snapshot_units_and_bounds(self):
-        memory = resources.memory()
-        self.assertTrue(0 <= memory["used"] <= memory["total"])
-        self.assertTrue(0 <= memory["percent"] <= 100)
-        previous, rows = resources.processes({}, 2)
-        self.assertTrue(previous)
-        self.assertLessEqual(len(rows), 7)
-        self.assertTrue(all(row["cpu"] == 0 and row["memory"] >= 0 for row in rows))
+    def hwmon(self, index, name, files):
+        device = self.sys / f"class/hwmon/hwmon{index}"
+        for field, value in {"name": name, **files}.items():
+            self.write(device / field, value)
+
+    def sampler(self, *args):
+        proc = subprocess.Popen([self.binary, *args], stdout=subprocess.PIPE, env=self.env, text=True)
+        self.addCleanup(proc.stdout.close)
+        self.addCleanup(proc.wait, 3)
+        self.addCleanup(proc.terminate)
+        return proc
+
+    def sample(self, process):
+        self.assertTrue(select.select([process.stdout], [], [], 5)[0], "sampler timed out")
+        return json.loads(process.stdout.readline())
+
+    def test_nvidia_units_and_unavailable_values(self):
+        self.fake_smi("""printf '%s\\n' 'pci0, NVIDIA GTX, 14, 47, 4096, 47' 'pci1, "NVIDIA GPU, two", N/A, nan, 8192, N/A' 'malformed'""")
+        sample = self.sample(self.sampler())
+        a, b = sample["gpus"]
+        self.assertEqual((a["id"], a["utilization"], a["memoryUsed"], a["memoryTotal"], a["temperature"]),
+                         ("pci0", 14, 47 * 1024**2, 4096 * 1024**2, 47))
+        self.assertEqual(b["name"], "NVIDIA GPU, two")
+        self.assertIsNone(b["utilization"])
+        self.assertIsNone(b["memoryUsed"])
+        self.assertIsNone(b["temperature"])
+        self.assertEqual(sample["temperatures"]["gpu"], 47)
+
+    def test_gpu_timeout_does_not_stop_monitor(self):
+        self.fake_smi("exec sleep 30")
+        sample = self.sample(self.sampler())
+        self.assertEqual(sample["gpus"], [])
+        self.assertEqual(sample["memory"]["percent"], 75)
+
+    def test_amd_sysfs_gpu_and_invalid_readings(self):
+        dev = self.sys / "class/drm/card0/device"
+        for field, value in {"vendor": "0x1002", "product_name": "AMD fixture", "gpu_busy_percent": "32",
+                             "mem_info_vram_used": "1073741824", "mem_info_vram_total": "8589934592",
+                             "hwmon/hwmon0/temp1_input": "52000"}.items():
+            self.write(dev / field, value)
+        proc = self.sampler()
+        gpu, = self.sample(proc)["gpus"]
+        self.assertEqual((gpu["name"], gpu["utilization"], gpu["memoryTotal"], gpu["temperature"]),
+                         ("AMD fixture", 32, 8589934592, 52))
+        self.write(dev / "gpu_busy_percent", "101")
+        self.assertIsNone(self.sample(proc)["gpus"][0]["utilization"])
+
+    def test_temperatures_only_use_recognized_sensors(self):
+        self.hwmon(0, "coretemp", {"temp1_input": "51000"})
+        self.hwmon(1, "nvme", {"temp1_label": "Composite", "temp1_input": "48850", "temp2_input": "99000"})
+        self.hwmon(2, "pch_cometlake", {"temp1_input": "53000"})
+        self.hwmon(3, "amdgpu", {"temp1_input": "47000"})
+        self.hwmon(4, "iwlwifi_1", {"temp1_input": "90000"})
+        self.assertEqual(self.sample(self.sampler())["temperatures"],
+                         {"cpu": 51, "gpu": 47, "storage": 48.85, "chipset": 53})
+
+    def test_summary_groups_smt_threads_and_matches_socket_sensors(self):
+        marker = self.root / "unexpected-smi"
+        self.fake_smi(f"touch '{marker}'")
+        for cpu, socket in ((0, 0), (1, 0), (2, 1)):
+            topo = self.sys / f"devices/system/cpu/cpu{cpu}/topology"
+            self.write(topo / "physical_package_id", str(socket))
+            self.write(topo / "core_id", "0")
+            if cpu != 1:
+                self.hwmon(socket, "coretemp", {"temp1_label": f"Package id {socket}", "temp1_input": "62000",
+                                                "temp2_label": "Core 0", "temp2_input": "45000" if socket == 0 else "bad"})
+        def cpu_stat(busy, idle):
+            rows = [("cpu", sum(busy), sum(idle)), *((f"cpu{i}", b, d) for i,(b,d) in enumerate(zip(busy,idle)))]
+            self.write(self.proc / "stat", "".join(f"{name} {b} 0 0 {d} 0 0 0 0\n" for name,b,d in rows))
+        cpu_stat([100]*3, [100]*3)
+        proc = self.sampler("--summary")
+        self.sample(proc)
+        cpu_stat([200, 100, 150], [100, 200, 150])
+        result = self.sample(proc)
+        self.assertEqual((result["cpu"], result["ram"], result["cpuSensor"]), (50, 75, 62))
+        self.assertEqual(result["cores"], [
+            {"label": "Socket 0 · Core 0", "usage": 50, "temperature": 45,
+             "threads": [{"id": 0, "usage": 100}, {"id": 1, "usage": 0}]},
+            {"label": "Socket 1 · Core 0", "usage": 50, "temperature": None,
+             "threads": [{"id": 2, "usage": 50}]},
+        ])
+        self.assertFalse(marker.exists())
+
+    def test_full_monitor_memory_network_and_process_deltas(self):
+        def counters(ticks, rx, start=100):
+            fields = ["0"] * 22
+            fields[0], fields[11], fields[19], fields[21] = "S", str(ticks), str(start), "16"
+            self.write(self.proc / "123/stat", '123 (strange "name") ' + " ".join(fields))
+            self.write(self.proc / "net/dev", f"lo: 9 0 0 0 0 0 0 0 9\neth0: {rx} 0 0 0 0 0 0 0 200")
+        counters(50, 300)
+        proc = self.sampler()
+        first = self.sample(proc)
+        self.assertEqual(first["memory"], {"total": 1024000, "used": 768000, "percent": 75,
+                                          "swapTotal": 102400, "swapUsed": 61440})
+        self.assertEqual(first["interfaces"], ["eth0"])
+        self.assertEqual(first["processes"][0]["name"], 'strange "name"')
+        self.assertEqual(first["processes"][0]["cpu"], 0)
+        counters(150, 2300)
+        later = self.sample(proc)
+        self.assertGreater(later["rx"], 0)
+        self.assertGreater(later["processes"][0]["cpu"], 0)
+        counters(200, 2300, start=200)
+        self.assertEqual(self.sample(proc)["processes"][0]["cpu"], 0)
 
 
 if __name__ == "__main__":

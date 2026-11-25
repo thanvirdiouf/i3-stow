@@ -76,7 +76,8 @@ APT installs the packages' library dependencies automatically.
 | `ddcutil` | External-monitor brightness polling and scrolling in both bars. |
 | `xdg-desktop-portal`, `xdg-desktop-portal-gtk`, `gnome-keyring` | GTK desktop portals and the configured keyring secret portal. |
 | `fontconfig` | Discovers the bundled Nerd Fonts and supplies `fc-cache`. |
-| `python3`, `x11-xserver-utils` | Window-manager helpers, resource sampling, and the `xrandr` display shortcut in Bash. |
+| `python3`, `x11-xserver-utils` | Window-manager helpers and the `xrandr` display shortcut in Bash. |
+| `build-essential`, `pkg-config`, `libglib2.0-dev` | Build the native Quickshell resource sampler. |
 | `bash`, `coreutils`, `grep`, `mawk`, `util-linux`, `systemd` | Shell/scripts, `readlink`, `sleep`, `awk`, `flock`, `systemctl`, and `loginctl`; normally already installed. |
 | `psmisc`, `i3status` | `killall` and the legacy i3status refresh command still used by the audio bindings. |
 | `neovim`, `fd-find`, `ripgrep` | Editor, explicitly configured `fdfind` file picker, and plugin text searches. |
@@ -95,7 +96,7 @@ sudo apt install \
   kdeconnect policykit-1-gnome pulseaudio-utils pavucontrol \
   brightnessctl ddcutil xdg-desktop-portal xdg-desktop-portal-gtk \
   gnome-keyring fontconfig python3 x11-xserver-utils bash coreutils grep mawk util-linux \
-  systemd psmisc neovim fd-find ripgrep tree-sitter-cli build-essential \
+  systemd psmisc neovim fd-find ripgrep tree-sitter-cli build-essential pkg-config libglib2.0-dev \
   curl ca-certificates tar gzip unzip python3-venv
 ```
 
@@ -263,7 +264,7 @@ polybar --reload --config="$HOME/.config/polybar/config.ini" example
 | Control | Action |
 | --- | --- |
 | Launcher icon / `Super+A` | Open the Rofi application launcher. |
-| Monitor icon / `Super+F12` | Toggle the live system monitor. |
+| CPU/RAM percentages | Hover for per-core usage and temperature. Click to toggle the full monitor. |
 | Workspace number | Switch workspace; scrolling cycles workspaces on the focused output. |
 | Clock | Toggle time/date; hover for the full date. |
 | Audio | Click to mute, scroll in 5% steps (capped at 100%), right-click for Pavucontrol. |
@@ -407,13 +408,18 @@ then stop the running helper and reload i3. Reloads cannot start duplicate helpe
 Dracula theme. Rofi is also the target of `control.sh launcher` and the shell's
 `desktop launcher` IPC action; it works without Quickshell running.
 
-**Super+F12** and the monitor icon toggle the Quickshell system monitor. It
+The bar shows total CPU and RAM usage every two seconds. Hover over the
+percentages to see each physical core's combined usage and temperature, followed
+by the usage of each sibling thread with its Linux CPU number. A dash marks a missing reading. When only a CPU-wide
+sensor is available, its temperature appears on a separate line.
+
+**Super+F12** and a click on the percentages toggle the Quickshell system monitor. It
 shares the bar's `Theme.qml`: Dracula surfaces, purple outlines, rounded corners,
 and JetBrains Mono Nerd Font. i3 floats and centers the window. Press **Escape**
 or its close button to dismiss it. If Quickshell is stopped, its shortcut
 displays a notice.
 
-The monitor samples every two seconds while open and stops its Python process
+The full monitor samples every two seconds while open and stops its collector
 when dismissed. It shows CPU utilization, available-memory based RAM usage,
 root filesystem capacity, swap, aggregate network rates (excluding loopback),
 GPU utilization and VRAM, CPU/GPU/SSD/chipset temperatures where available,
@@ -422,7 +428,9 @@ Process CPU uses **100% per core**;
 overall CPU is normalized across all cores. Graphs keep the last 45 samples;
 the network graph scales to its largest retained sample. Disk capacity describes
 `/`, and network totals can include virtual interfaces. No process controls are
-provided. The sampler uses Python's standard library and Linux `/proc`/`/sys`.
+provided. Both views use the same C program. The launcher compiles it on first
+use and caches the executable under `${XDG_CACHE_HOME:-~/.cache}/quickshell`.
+Only the lightweight CPU, RAM, and CPU-temperature sampler runs continuously.
 
 The GPU card tracks the first GPU with usable utilization telemetry (falling
 back to the first detected telemetry device). On this machine that is the

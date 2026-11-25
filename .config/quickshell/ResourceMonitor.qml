@@ -58,7 +58,7 @@ DesktopWindow {
 
     Process {
         id: sampler
-        command: ["python3", Quickshell.shellPath("resources.py")]
+        command: ["sh", Quickshell.shellPath("resources.sh")]
         running: root.visible
         stdout: SplitParser {
             onRead: line => {

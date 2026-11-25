@@ -26,6 +26,46 @@ ShellRoot {
     readonly property int charge: Math.round(battery.percentage * 100)
 
     ResourceMonitor { id: systemMonitor }
+    Process {
+        id: usageSampler
+        property var sample: null
+        function percent(value) {
+            return value == null ? "—" : Math.round(value) + "%";
+        }
+        function coreHint(screenHeight) {
+            if (!sample)
+                return "Reading CPU counters…";
+            const lines = sample.cores.map(core => {
+                const temp = core.temperature == null ? "—" : Math.round(core.temperature) + "°C";
+                const threads = (core.threads ?? []).map(t => "CPU " + t.id + " " + percent(t.usage).padStart(4));
+                return core.label + "  " + percent(core.usage).padStart(4) + "  " + temp.padStart(4)
+                    + "    " + threads.join("  ");
+            });
+            // Lay out long core lists in columns so the tooltip fits below the bar.
+            const perColumn = Math.max(1, Math.floor((screenHeight - Theme.barHeight - 96) / (Theme.fontSize * 1.6)));
+            const rows = [];
+            const width = Math.max(0, ...lines.map(line => line.length)) + 3;
+            for (let i = 0; i < Math.min(lines.length, perColumn); ++i) {
+                let row = lines[i];
+                for (let j = i + perColumn; j < lines.length; j += perColumn)
+                    row = row.padEnd(width * Math.floor(j / perColumn)) + lines[j];
+                rows.push(row);
+            }
+            if (sample.cores.some(core => core.temperature == null))
+                rows.push(sample.cpuSensor == null ? "—  Core sensor unavailable" : "CPU sensor: " + Math.round(sample.cpuSensor) + "°C");
+            return ["Core usage and temperature    Thread usage", ...rows].join("\n");
+        }
+        command: ["sh", Quickshell.shellPath("resources.sh"), "--summary"]
+        running: true
+        stdout: SplitParser {
+            onRead: line => { usageSampler.sample = JSON.parse(line); }
+        }
+        onExited: {
+            sample = null;
+            retryUsage.restart();
+        }
+    }
+    Timer { id: retryUsage; interval: 2000; onTriggered: usageSampler.running = true }
     WorkspaceSwitcher { id: workspaceSwitcher; backend: desktopBackend.item }
     IpcHandler {
         target: "desktop"
@@ -160,7 +200,9 @@ ShellRoot {
 
                 BarButton {
                     id: clockButton
-                    anchors.centerIn: parent
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: Math.min(Math.max((parent.width - width) / 2, left.x + left.width + 3), right.x - width - 3)
+                    visible: x >= left.x + left.width
                     text: Qt.formatDateTime(clock.date, panel.showDate ? "ddd, dd MMM" : "hh:mm AP")
                     foreground: Theme.purple
                     hint: Qt.formatDateTime(clock.date, "dddd, d MMMM yyyy") + "\nClick to switch date / time"
@@ -175,9 +217,11 @@ ShellRoot {
                     spacing: 3
 
                     BarButton {
-                        text: "󰍛"
+                        text: "CPU " + usageSampler.percent(usageSampler.sample?.cpu)
+                            + "  RAM " + usageSampler.percent(usageSampler.sample?.ram)
                         foreground: Theme.purple
-                        hint: "System monitor · Super+F12"
+                        hint: hovered ? usageSampler.coreHint(panel.screen.height) : ""
+                        hintTimeout: -1
                         onClicked: systemMonitor.visible = !systemMonitor.visible
                     }
 

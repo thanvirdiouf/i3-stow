@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import "." as Components
 
 Rectangle {
     id: root
     property string text: ""
     property string hint: ""
+    property int hintTimeout: 6000
     property color foreground: Theme.foreground
     property bool active: false
     property bool interactive: true
@@ -49,22 +51,37 @@ Rectangle {
     }
 
     ToolTip {
+        id: tip
+        readonly property int shadowMargin: 10
         // A dock is shallow. A native popup can extend below it without
         // covering the button and intercepting subsequent wheel events.
         popupType: Popup.Window
-        y: root.height + 8
+        y: root.height
+        padding: shadowMargin + 6
         visible: mouse.containsMouse && root.hint.length > 0
         delay: 600
-        timeout: 6000
+        timeout: root.hintTimeout
         text: root.hint
         contentItem: Components.Label {
             text: root.hint
             elide: Text.ElideNone
         }
-        background: Rectangle {
-            color: Theme.background
-            radius: 7
-            border.color: Theme.border
+        background: Item {
+            RectangularShadow {
+                anchors.fill: bubble
+                radius: bubble.radius
+                blur: 8
+                offset: Qt.vector2d(0, 2)
+                color: "#66000000"
+            }
+            Rectangle {
+                id: bubble
+                anchors.fill: parent
+                anchors.margins: tip.shadowMargin
+                color: Theme.base
+                radius: 7
+                border.color: Theme.border
+            }
         }
     }
 }

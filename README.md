@@ -18,7 +18,8 @@ The i3/bspwm bar stays visible across the full width of each screen. It sits
 flush against the top and side edges, with a borderless Dracula background
 and JetBrains Mono Nerd Font. It shows ten workspace buttons, the focused window
 title, date/time, live PipeWire audio, battery, brightness, and a system tray.
-The system monitor shows live CPU, GPU/VRAM, RAM, disk, network, hardware
+The bar shows live CPU and RAM percentages. Hover for per-core usage and temperature,
+or click to open the full monitor. The monitor shows CPU, GPU/VRAM, RAM, disk, network, hardware
 temperatures, and process statistics. The application button opens the existing
 Rofi launcher.
 
