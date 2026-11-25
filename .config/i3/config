@@ -15,10 +15,6 @@ client.focused          #bd93f9 #282a36    #f8f8f2 #bd93f9   #bd93f9
 client.focused_inactive #694b8a #282a36    #f8f8f2 #694b8a   #694b8a
 client.unfocused        #694b8a #282a36    #f8f8f2 #694b8a   #694b8a
 
-# This font is widely installed, provides lots of unicode glyphs, right-to-left
-# text rendering and scalability on retina/hidpi displays (thanks to pango).
-#font pango:DejaVu Sans Mono 8
-
 # Start XDG autostart .desktop files using dex. See also
 # https://wiki.archlinux.org/index.php/XDG_Autostart
 exec --no-startup-id dex --autostart --environment i3
@@ -29,9 +25,6 @@ exec --no-startup-id ~/.local/bin/display-profile
 exec_always --no-startup-id python3 "$HOME/.config/i3/dwindle.py"
 bindsym $mod+Shift+d exec --no-startup-id i3-msg -t send_tick dwindle-toggle
 
-# The combination of xss-lock, nm-applet and pactl is a popular choice, so
-# they are included here as an example. Modify as you see fit.
-
 # xss-lock grabs a logind suspend inhibit lock and will use i3lock to lock the
 # screen before suspend. Use loginctl lock-session to lock your screen.
 # Picom animates the lock window; i3lock keeps its native password indicator.
@@ -41,7 +34,7 @@ bindsym $mod+l exec --no-startup-id "$HOME/.config/i3/lock.sh"
 # Using exec_always ensures the wallpaper is set even when you reload i3
 exec_always --no-startup-id feh --bg-fill ~/.config/i3/wall.jpg
 
-# Quickshell auto-hides at the top edge and starts its legacy tray bridge.
+# Quickshell starts the top bar and its legacy tray bridge.
 exec --no-startup-id nixGL quickshell --no-duplicate
 # Geometry animation requires Picom 12+ from the regular Nix profile.
 # The launcher resolves picom from PATH and uses nixGL for the host driver.
@@ -50,8 +43,6 @@ exec --no-startup-id sh "$HOME/.config/picom/start.sh"
 # `gaps top 38` below. Both bars cannot own the legacy tray at the same time.
 # exec --no-startup-id polybar --reload --config="$HOME/.config/polybar/config.ini" example
 
-# NetworkManager is the most popular way to manage wireless networks on Linux,
-# and nm-applet is a desktop environment-independent system tray GUI for it.
 exec --no-startup-id nm-applet
 exec --no-startup-id kdeconnect-indicator
 
@@ -64,7 +55,7 @@ bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT
 bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle && $refresh_i3status
 bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
 
-# Screen brightness keys: adjust the display backlight in 5% steps.
+# Screen brightness keys: adjust the display backlight in 10% steps.
 # Keep a nonzero minimum so repeated decreases don't turn the backlight off.
 bindsym XF86MonBrightnessUp exec --no-startup-id brightnessctl --class=backlight --min-value=1 set +10%
 bindsym XF86MonBrightnessDown exec --no-startup-id brightnessctl --class=backlight --min-value=1 set 10%-
@@ -78,7 +69,7 @@ bindsym --release Shift+Print exec --no-startup-id mkdir -p "$HOME/Pictures/Scre
 floating_modifier $mod
 
 # Open these apps as floating windows with fullscreen disabled.
-for_window [title="^Spectre · (Applications|System Monitor)$"] fullscreen disable, floating enable, border pixel 0, move position center
+for_window [title="^Spectre · System Monitor$"] fullscreen disable, floating enable, border pixel 0, move position center
 for_window [class="(?i)^(localsend(_app)?|org[.]localsend[.]localsend_app|gedit|org[.]gnome[.]gedit|blueman-manager|pavucontrol|kdeconnect([._-].*)?|org[.]kde[.]kdeconnect([.-].*)?)$"] fullscreen disable, floating enable
 
 # move tiling windows via drag & drop by left-clicking into the title bar,
@@ -93,15 +84,9 @@ bindsym $mod+b exec --no-startup-id helium
 # kill focused window
 bindsym $mod+q kill
 
-# start dmenu (a program launcher)
 bindsym $mod+a exec --no-startup-id rofi -show drun
 bindsym $mod+F12 exec --no-startup-id sh "$HOME/.config/quickshell/control.sh" monitor
 bindsym $mod+BackSpace exec --no-startup-id ~/.config/rofi/greenpower.sh
-# A more modern dmenu replacement is rofi:
-# bindcode $mod+40 exec "rofi -modi drun,run -show drun"
-# There also is i3-dmenu-desktop which only displays applications shipping a
-# .desktop file. It is a wrapper around dmenu, so you need that installed.
-# bindcode $mod+40 exec --no-startup-id i3-dmenu-desktop
 
 # change focus
 bindsym $mod+j focus left
@@ -127,18 +112,11 @@ bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-# split in horizontal orientation
-#bindsym $mod+h split h
-
-# split in vertical orientation
-#bindsym $mod+v split v
-
 # enter fullscreen mode for the focused container
 bindsym Mod1+Return fullscreen toggle
 
-# change container layout (stacked, tabbed, toggle split)
+# change container layout
 bindsym $mod+s layout stacking
-#bindsym $mod+w layout tabbed
 bindsym $mod+v layout toggle split
 
 # toggle tiling / floating
@@ -146,12 +124,6 @@ bindsym $mod+w floating toggle
 
 # change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
-
-# focus the parent container
-#bindsym $mod+a focus parent
-
-# focus the child container
-#bindsym $mod+d focus child
 
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
@@ -230,14 +202,7 @@ mode "resize" {
 
 bindsym $mod+r mode "resize"
 
-# Start i3bar to display a workspace bar (plus the system information i3status
-# finds out, if available)
-#bar {
-#	position	top
-#        status_command i3status
-#}
-
 gaps outer 1
 gaps inner 10
-# Quickshell reserves dock space while revealed; leave no permanent bar gap.
+# The Quickshell dock reserves its own height.
 gaps top 0

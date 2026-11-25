@@ -14,17 +14,13 @@ Workspaces, window title, clock, volume, battery, brightness, and system tray.
 
 ## Quickshell
 
-The shared i3/bspwm X11 bar auto-hides and slides down when the cursor reaches the
-top 4 pixels of a screen. It lingers for at least 5 seconds after the cursor
-leaves. The bar and the window manager's reserved space animate together over 320 ms; tiled
-windows reclaim all space once it is hidden. It uses Dracula purple, rounded
-corners, and JetBrains Mono Nerd Font. Includes ten workspace buttons, the focused window
+The i3/bspwm bar stays visible across the full width of each screen. It sits
+flush against the top and side edges, with a borderless Dracula background
+and JetBrains Mono Nerd Font. It shows ten workspace buttons, the focused window
 title, date/time, live PipeWire audio, battery, brightness, and a system tray.
 The system monitor shows live CPU, GPU/VRAM, RAM, disk, network, hardware
 temperatures, and process statistics. The application button opens the existing
 Rofi launcher.
-
-![Quickshell floating bar with purple workspace and clock accents](docs/screenshots/quickshell.png)
 
 Run with `nixGL quickshell`. See the [Quickshell setup notes](docs/setup.md#quickshell)
 for dependencies, the legacy tray bridge, and switching back to Polybar.
@@ -81,7 +77,7 @@ show the idle and simulated typing states.
 - **LightDM:** the GTK login screen shares the desktop wallpaper, rounded Dracula panels, and JetBrains Mono. See the [LightDM guide](docs/lightdm.md).
 - **Rofi:** default application launcher and a power menu with confirmation prompts.
 - **Polybar:** a fallback bar with audio and brightness controls.
-- **Quickshell:** a floating bar and live resource monitor sharing the desktop's Dracula palette.
+- **Quickshell:** a full-width top bar and live resource monitor sharing the desktop's Dracula palette.
 
 Neovim/LazyVim, Bash, mpv, and desktop-portal settings are also included.
 

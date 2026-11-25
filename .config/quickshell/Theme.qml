@@ -23,13 +23,6 @@ QtObject {
     readonly property bool lightTrayIcons: true
     readonly property var lightTrayItemIds: ["blueman", "kde connect indicator", "nvidia-prime",
         "mintupdate.py", "networkmanager applet", "tray.py"]
-    readonly property int barHeight: 38
-    readonly property int topMargin: 6
-    readonly property int barRevealHeight: 4
-    readonly property int barHideDelay: 5000
-    readonly property int barSlideDuration: 320
-    readonly property real widthFraction: 0.60
-    readonly property int minimumWidth: 1040
-    readonly property int radius: 10
+    readonly property int barHeight: 28
     readonly property int borderWidth: 2
 }

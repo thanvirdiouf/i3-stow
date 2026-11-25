@@ -76,7 +76,7 @@ APT installs the packages' library dependencies automatically.
 | `ddcutil` | External-monitor brightness polling and scrolling in both bars. |
 | `xdg-desktop-portal`, `xdg-desktop-portal-gtk`, `gnome-keyring` | GTK desktop portals and the configured keyring secret portal. |
 | `fontconfig` | Discovers the bundled Nerd Fonts and supplies `fc-cache`. |
-| `python3`, `libglib2.0-bin`, `x11-xserver-utils` | i3 helpers, resource sampler, GIO application launching, and `xrandr` lock artwork sizing. |
+| `python3`, `x11-xserver-utils` | Window-manager helpers, resource sampling, and the `xrandr` display shortcut in Bash. |
 | `bash`, `coreutils`, `grep`, `mawk`, `util-linux`, `systemd` | Shell/scripts, `readlink`, `sleep`, `awk`, `flock`, `systemctl`, and `loginctl`; normally already installed. |
 | `psmisc`, `i3status` | `killall` and the legacy i3status refresh command still used by the audio bindings. |
 | `neovim`, `fd-find`, `ripgrep` | Editor, explicitly configured `fdfind` file picker, and plugin text searches. |
@@ -94,7 +94,7 @@ sudo apt install \
   dex xss-lock i3lock feh flameshot network-manager network-manager-gnome \
   kdeconnect policykit-1-gnome pulseaudio-utils pavucontrol \
   brightnessctl ddcutil xdg-desktop-portal xdg-desktop-portal-gtk \
-  gnome-keyring fontconfig python3 libglib2.0-bin x11-xserver-utils bash coreutils grep mawk util-linux \
+  gnome-keyring fontconfig python3 x11-xserver-utils bash coreutils grep mawk util-linux \
   systemd psmisc neovim fd-find ripgrep tree-sitter-cli build-essential \
   curl ca-certificates tar gzip unzip python3-venv
 ```
@@ -207,7 +207,6 @@ normal startup uses the configured GLX backend.
 Validation included Picom 13 diagnostics, non-takeover debug rendering, and an
 actual tiled Kitty open/close cycle recorded at 60 fps. Frame inspection showed
 intermediate tile positions and sizes, with no compositor rendering errors.
-The live bar's reservation behavior is checked separately as described below.
 
 ### Quickshell
 
@@ -239,54 +238,17 @@ i3-msg 'gaps top all set 0'
 nixGL quickshell --no-duplicate
 ```
 
-Quickshell starts automatically at the next login. The bar is **hidden by
-default**. Move the cursor into the top **4 pixels** of any screen to slide
-that screen's bar down. It stays visible while the cursor is over the top edge
-or the bar, and waits **at least 5 seconds** after the cursor leaves before
-sliding back up. Returning during that delay cancels the pending hide and starts
-a fresh five-second delay on the next exit. The top margin is included in the
-hover area, so moving from the edge to a button does not interrupt the reveal.
-
-The bar and the reserved height share a **320 ms eased animation**, so tiled
-windows move with the bar instead of jumping by its full height. The reservation
-grows from zero to **50 pixels** on reveal, stays at that height through the
-five-second linger, and smoothly shrinks during the outgoing slide.
-Once the bar is fully hidden, that reservation is removed and tiled windows
-reclaim the space. i3 uses a temporary dock; bspwm's backend drives monitor
-padding directly because its EWMH struts cannot shrink the reservation.
-Keep `gaps top 0` in i3. Transparent areas outside the edge
-hotspot and visible bar pass pointer events through to the applications below.
-It does not take keyboard
-focus. Each screen has its own reveal state and timer. The tray stays alive
-while the surface is hidden, and buttons, scrolling, and tooltips still work.
-
-This setup uses Quickshell's native `XPanelWindow` backend and its Qt
-`X11BypassWindowManagerHint` flag. i3 reserves managed docks' native height even
-with zero struts, so the reveal window uses override-redirect to stay alive
-without reserving permanent space. In i3, a separate transparent, non-focusable managed
-dock follows the reveal animation's height and unmaps when the slide-out
-finishes. The reveal window ignores this temporary dock's exclusion zone so it
-stays at the top edge. bspwm uses direct per-monitor padding in place of this
-spacer. The Picom rules
-continue to keep this dock free of effects that would fill or shadow its
-transparent margins.
-
-In `Theme.qml`, `barRevealHeight` controls the hotspot, `barHideDelay` controls
-the linger in milliseconds (clamped to a minimum of 5000), and
-`barSlideDuration` controls both the bar and reservation animation (320 ms by
-default, with cubic easing at both ends).
+Quickshell starts automatically at login. Each monitor gets a full-width,
+borderless top bar that stays visible and leaves keyboard focus with the
+active window. The bar height is 28 pixels, set by `barHeight` in `Theme.qml`.
+i3 reserves that space through the dock, so keep `gaps top 0`. In bspwm the
+shell sets each monitor's top padding to the bar height and clears it on exit.
 
 The bspwm session also binds **Super+Tab** to a Quickshell workspace switcher.
 Hold Super to cycle recently used occupied workspaces, then release it to commit;
 Shift reverses and Escape cancels. Its colors and rounded cards use the same
 `Theme.qml`. See the [switcher and independent wheel controls](bspwm.md#quickshell-workspace-switcher)
 for the complete behavior.
-
-Live i3/X11 checks covered edge reveal, sustained button hover, the full
-five-second linger, re-entry resetting the timer, and clock/tray interactions
-without taking keyboard focus. Sampling i3's dock area confirmed intermediate
-heights during both animations, a 50-pixel reservation when fully revealed,
-and zero reservation once hidden.
 
 For the Polybar fallback, stop Quickshell, swap the commented startup lines in
 `.config/i3/config`, and change `gaps top 0` to `gaps top 38`. For the current
@@ -364,8 +326,7 @@ python3 -m venv "$HOME/.local/share/nvim/venv"
 
 Lazy.nvim downloads the Lua plugins on first launch; Mason manages configured
 language servers and formatters. Their runtime dependencies depend on the tools
-you enable. `.config/nvim/lua/plugins/example.lua` returns an empty spec, so its
-example Pyright, TypeScript, and linting tools are not active dependencies.
+you enable. Local plugin settings live in `.config/nvim/lua/plugins/overrides.lua`.
 Nerd Fonts and ast-grep executables are already bundled in this repository.
 
 ### Link the dotfiles
@@ -452,10 +413,6 @@ and JetBrains Mono Nerd Font. i3 floats and centers the window. Press **Escape**
 or its close button to dismiss it. If Quickshell is stopped, its shortcut
 displays a notice.
 
-The earlier QML launcher and static lock artwork files remain available in the
-repository as optional components, but the active shell does not instantiate
-the launcher or generate cached lock artwork.
-
 The monitor samples every two seconds while open and stops its Python process
 when dismissed. It shows CPU utilization, available-memory based RAM usage,
 root filesystem capacity, swap, aggregate network rates (excluding loopback),
@@ -520,8 +477,6 @@ for the source, rebuild commands, shader settings, and original-padlock fallback
 
 This animation is produced by Picom on X11. Quickshell's secure session-lock
 API is Wayland-only; a normal QML window cannot replace i3lock's security role.
-The static QML lockscreen design from the previous revision remains in the
-repository but is not active.
 
 After changing the configuration, press **Super+Shift+C** to reload i3.
 Quickshell reloads its QML automatically. Picom normally reloads its configuration;

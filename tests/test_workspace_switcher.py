@@ -2,7 +2,9 @@
 """Modifier-release and workspace-preview data regression checks."""
 import importlib.util
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,9 +18,18 @@ def load(name, path):
 
 modifier = load('super_release', '.config/quickshell/super-release.py')
 state = load('switcher_state', '.config/quickshell/bspwm-state.py')
+scroll = load('workspace_scroll', '.local/lib/workspace_scroll.py')
 
 
 class WorkspaceSwitcher(unittest.TestCase):
+    def test_scroll_burst_resets_after_quiet_since_last_wheel_event(self):
+        with tempfile.TemporaryDirectory() as directory:
+            state_file = Path(directory) / 'last-event'
+            with patch.object(scroll.time, 'monotonic', side_effect=[5.0, 5.25, 5.5, 6.0]):
+                for expected in (True, False, False, True):
+                    with scroll.scroll_burst(state_file) as first_event:
+                        self.assertEqual(first_event, expected)
+
     def test_releasing_one_super_does_not_commit_while_other_is_held(self):
         keymap = bytearray(32)
         keymap[64 // 8] |= 1 << (64 % 8)

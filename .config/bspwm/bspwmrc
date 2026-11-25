@@ -26,11 +26,8 @@ bspc config borderless_monocle false
 bspc config gapless_monocle false
 bspc config single_monocle false
 bspc config honor_size_hints false
-# bspwm's struts only grow padding. Quickshell sets monitor padding directly
-# on reveal AND hide; ignoring struts prevents a stale permanent bar gap.
+# Quickshell reserves its height on each monitor while the bar is running.
 bspc config ignore_ewmh_struts true
-# Top padding belongs to Quickshell, including while reloading this file.
-# Its backend clears stale padding when it starts and when it exits.
 bspc config bottom_padding 0
 bspc config left_padding 0
 bspc config right_padding 0

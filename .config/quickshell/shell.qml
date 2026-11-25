@@ -77,99 +77,23 @@ ShellRoot {
                 left: true
                 right: true
             }
-            implicitHeight: Theme.barHeight + Theme.topMargin * 2
-            // Keep the actual bar alive for tray ownership and the edge sensor.
-            // Ignore the temporary spacer below so this surface stays at y=0.
-            exclusionMode: ExclusionMode.Ignore
-            color: "transparent"
+            implicitHeight: Theme.barHeight
+            exclusionMode: root.bspwm ? ExclusionMode.Ignore : ExclusionMode.Auto
             focusable: false
-            // i3 reserves the height of managed dock windows even with zero
-            // struts. Use Qt's X11 override-redirect flag on this native backend
-            // so hiding the reveal surface itself leaves no permanent gap.
-            onWindowConnected: _backingWindow.flags |= Qt.X11BypassWindowManagerHint
-            mask: Region {
-                width: panel.width
-                height: Theme.barRevealHeight
-                Region {
-                    // Include the margin above the bar so crossing that gap
-                    // never ends the hover. All other transparent pixels pass
-                    // through to application windows underneath.
-                    x: surface.x
-                    width: surface.width
-                    height: Math.max(0, surface.y + surface.height)
-                }
-            }
+            color: Theme.background
 
             readonly property bool compact: surface.width < 1100
             readonly property var workspaces: desktopBackend.item ? desktopBackend.item.workspaces : []
             property bool showDate: false
-            property bool revealed: false
-            property real revealProgress: revealed ? 1 : 0
-            readonly property int reservedHeight: Math.round((Theme.barHeight + Theme.topMargin * 2) * revealProgress)
-            onReservedHeightChanged: {
-                if (root.bspwm && desktopBackend.item)
-                    desktopBackend.item.reserveSpace(panel.screen.name, reservedHeight);
-            }
-            Behavior on revealProgress {
-                NumberAnimation {
-                    duration: Theme.barSlideDuration
-                    easing.type: Easing.InOutCubic
-                }
-            }
-
-            PanelWindow {
-                // The same eased progress drives the bar and reserved height,
-                // so tiled windows move with it instead of jumping by 50px.
-                // Unmap at zero: i3 reserves even zero-strut managed docks.
-                screen: panel.screen
-                visible: !root.bspwm && panel.revealProgress > 0
-                anchors { top: true; left: true; right: true }
-                implicitHeight: Math.max(1, Math.round((Theme.barHeight + Theme.topMargin * 2) * panel.revealProgress))
-                exclusionMode: ExclusionMode.Auto
-                aboveWindows: false
-                focusable: false
-                color: "transparent"
-                mask: Region {}
-            }
-
-            HoverHandler {
-                id: barHover
-                // HoverHandler observes buttons without intercepting clicks,
-                // scrolling, or the legacy tray bridge's native interactions.
-                onHoveredChanged: {
-                    if (hovered) {
-                        hideDelay.stop();
-                        panel.revealed = true;
-                    } else if (panel.revealed) {
-                        hideDelay.restart();
-                    }
-                }
-            }
-
-            Timer {
-                id: hideDelay
-                interval: Math.max(5000, Theme.barHideDelay)
-                onTriggered: {
-                    if (!barHover.hovered)
-                        panel.revealed = false;
-                }
-            }
 
             Brightness {
                 id: brightness
                 external: !/^(eDP|LVDS|DSI)/i.test(panel.screen.name)
             }
 
-            Rectangle {
+            Item {
                 id: surface
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: -height + (height + Theme.topMargin) * panel.revealProgress
-                width: Math.min(panel.screen.width - 24, Math.max(Theme.minimumWidth, Math.round(panel.screen.width * Theme.widthFraction)))
-                height: Theme.barHeight
-                color: Theme.background
-                radius: Theme.radius
-                border.width: Theme.borderWidth
-                border.color: Theme.purple
+                anchors.fill: parent
 
                 RowLayout {
                     id: left

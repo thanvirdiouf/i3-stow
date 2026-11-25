@@ -114,11 +114,8 @@ momentum into one switch per scroll burst.
   After changing monitor arrangements,
   bspwm can move a desktop with `bspc desktop <name> -m <monitor>`; reload does
   not redistribute existing work.
-- The bar retains the top-four-pixel trigger and at least five-second linger.
-  Its backend updates monitor padding throughout the animation and clears it
-  when hidden. bspwm 0.9.10 only grows padding from EWMH struts, so this session
-  ignores those struts and sets padding directly. The i3 backend keeps using
-  its temporary dock. No fixed padding is set aside for a hidden bar.
+- The borderless bar spans the top of each monitor. Quickshell sets each
+  monitor's top padding to the bar height and releases it on exit.
 - LocalSend, Gedit, Bluetooth/audio settings, and KDE Connect utility windows
   float and center. The Quickshell monitor floats with its own border.
 

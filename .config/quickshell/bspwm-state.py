@@ -51,9 +51,8 @@ def model(world):
     return dict(workspaces=workspaces), focused
 
 
-def snapshot():
-    result = subprocess.run(['bspc', 'wm', '-d'], text=True, capture_output=True, check=True, timeout=2)
-    state, focused = model(json.loads(result.stdout))
+def snapshot(world):
+    state, focused = model(world)
     title = 'Desktop'
     if focused:
         result = subprocess.run(['xprop', '-notype', '-id', str(focused), '_NET_WM_NAME', 'WM_NAME'],
@@ -74,43 +73,31 @@ def main():
     def stop(*_):
         raise SystemExit()
 
+    bar_height = int(sys.argv[1])
     signal.signal(signal.SIGTERM, stop)
     # Binary nonblocking reads avoid text buffering swallowing pending events.
     events = subprocess.Popen(['bspc', 'subscribe', 'report'], stdout=subprocess.PIPE)
-    # Clear stale padding after a shell restart; every bar starts hidden.
-    world = json.loads(subprocess.check_output(['bspc', 'wm', '-d'], text=True))
-    for monitor in world['monitors']:
-        subprocess.run(['bspc', 'config', '-m', monitor['name'], 'top_padding', '0'], check=True)
-    inputs = [events.stdout, sys.stdin]
-    pending = b''
+    monitors = []
     previous = None
     try:
         while True:
-            current = snapshot()
+            world = json.loads(subprocess.check_output(['bspc', 'wm', '-d'], text=True, timeout=2))
+            monitors = world['monitors']
+            for monitor in monitors:
+                if monitor['padding']['top'] != bar_height:
+                    subprocess.run(['bspc', 'config', '-m', monitor['name'], 'top_padding', str(bar_height)],
+                                   check=False, stderr=subprocess.DEVNULL)
+            current = snapshot(world)
             if current != previous:
                 print(current, flush=True)
                 previous = current
-            ready, _, _ = select.select(inputs, [], [], 1)
-            if events.stdout in ready and not os.read(events.stdout.fileno(), 65536):
+            ready, _, _ = select.select([events.stdout], [], [], 1)
+            if ready and not os.read(events.stdout.fileno(), 65536):
                 break
-            if sys.stdin in ready:
-                data = os.read(sys.stdin.fileno(), 65536)
-                if not data:
-                    inputs.remove(sys.stdin)
-                    continue
-                pending += data
-                updates = {}
-                while b'\n' in pending:
-                    line, pending = pending.split(b'\n', 1)
-                    update = json.loads(line)
-                    updates[update['monitor']] = max(0, min(200, int(update['height'])))
-                for monitor, height in updates.items():
-                    subprocess.run(['bspc', 'config', '-m', monitor, 'top_padding', str(height)],
-                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         print(f'bspwm state: {error}', file=sys.stderr)
     finally:
-        for monitor in world['monitors']:
+        for monitor in monitors:
             subprocess.run(['bspc', 'config', '-m', monitor['name'], 'top_padding', '0'],
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         events.terminate()

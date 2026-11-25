@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Small UX operations that need more context than a single bspc command."""
-import fcntl
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
-import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / ".local/lib"))
+from workspace_scroll import scroll_burst
 
 
 def bsp(*args, check=True):
@@ -76,16 +77,8 @@ def occupied_target(world, direction):
 def scroll(direction):
     runtime = Path(os.environ.get('XDG_RUNTIME_DIR', '/tmp'))
     display = os.environ.get('DISPLAY', 'default').replace('/', '_')
-    with (runtime / f'bspwm-scroll-{os.getuid()}-{display}').open('a+') as state:
-        fcntl.flock(state, fcntl.LOCK_EX)
-        state.seek(0)
-        previous = state.read()
-        now = time.monotonic()
-        state.seek(0)
-        state.truncate()
-        state.write(str(now))
-        state.flush()
-        if not previous or now - float(previous) >= .35:
+    with scroll_burst(runtime / f'bspwm-scroll-{os.getuid()}-{display}') as first_event:
+        if first_event:
             target = occupied_target(json.loads(bsp('wm', '-d')), direction)
             if target:
                 bsp('desktop', '-f', target, check=False)
