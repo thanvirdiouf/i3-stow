@@ -23,7 +23,7 @@
 │   ├── rofi                    # Launcher theme, background, and power menu
 │   └── xdg-desktop-portal      # Desktop portal configuration
 ├── docs                        # Setup guide and screenshots
-├── system/lightdm              # Optional system-wide login theme
+├── system/lightdm              # Login theme and shared monitor layout
 └── .local
     ├── bin                     # Local executable directory
     ├── opt/ast-grep             # Bundled ast-grep executables
@@ -148,8 +148,8 @@ the command above alone does not satisfy these editor version requirements.
 For the alternative session and its native layout choices, see the
 [bspwm guide](bspwm.md).
 
-For the graphical login screen, see the [LightDM guide](lightdm.md) for
-installation, customization, and rollback.
+For the graphical login screen, see the [LightDM guide](lightdm.md). It covers
+the theme and [sharing the i3 monitor layout with the greeter](lightdm.md#share-the-monitor-layout-with-i3).
 
 ### Picom and smooth tiling
 

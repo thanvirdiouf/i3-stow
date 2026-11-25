@@ -47,6 +47,29 @@ Save your work and log out to see the greeter. Check the wallpaper, password
 field, and session menu, then sign back in. Greeter diagnostics on this
 machine are in `/var/log/lightdm/seat0-greeter.log`.
 
+## Share the monitor layout with i3
+
+The display profile reads the kernel command line. Set `display_profile=hdmi`
+to use the external monitor on its own when connected. The default layout puts
+HDMI to the right of the laptop panel. If HDMI is unplugged, the script uses the
+laptop panel. Check the connector and provider names against `xrandr --query`
+and `xrandr --listproviders` when setting this up on another machine.
+
+i3 runs the checked-in script through its Stow wrapper until a system copy is
+installed. To apply the same layout at the login screen, install the script
+and LightDM seat setting from the repository root. If `lightdm --show-config`
+already lists `display-setup-script=/etc/lightdm/display-profile.sh`, only the
+first command is needed.
+
+```sh
+sudo install -D -m 0755 system/lightdm/display-profile.sh /etc/lightdm/display-profile.sh
+sudo install -D -m 0644 system/lightdm/91-display-profile.conf /etc/lightdm/lightdm.conf.d/91-display-profile.conf
+```
+
+After editing the script, repeat the first command to update both i3 and the
+greeter. To undo this setup, remove the seat setting you installed before
+removing the system script. i3 then uses the repository copy again.
+
 ## Customize
 
 Edit [the GTK stylesheet](../system/lightdm/Dotfiles-LightDM/gtk-3.0/gtk.css)

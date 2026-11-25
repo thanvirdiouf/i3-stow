@@ -1,12 +1,9 @@
 #!/bin/sh
 
-case " $(cat /proc/cmdline) " in
-    *" display_profile=hdmi "*)
-        xrandr --output HDMI-1-0 --primary --auto --pos 0x0 \
-               --output eDP-1 --off
-        ;;
-    *)
-        xrandr --output eDP-1 --primary --auto --pos 0x0 \
-               --output HDMI-1-0 --auto --right-of eDP-1
-        ;;
-esac
+if [ -x /etc/lightdm/display-profile.sh ]; then
+    exec /etc/lightdm/display-profile.sh
+fi
+
+# A Stow-only installation can use the repository copy directly.
+bin_dir=$(dirname -- "$(readlink -f -- "$0")")
+exec "$bin_dir/../../system/lightdm/display-profile.sh"
