@@ -9,7 +9,7 @@ Item {
     property var workspaces: []
     function focusWorkspace(name): void { Quickshell.execDetached(["bspc", "desktop", "-f", String(name)]); }
     function scrollWorkspace(direction): void {
-        Quickshell.execDetached(["python3", Quickshell.shellPath("../bspwm/actions.py"), "scroll", direction > 0 ? "prev" : "next"]);
+        Quickshell.execDetached([Quickshell.shellPath("../bspwm/native.sh"), "scroll", direction > 0 ? "prev" : "next"]);
     }
     Process {
         id: events

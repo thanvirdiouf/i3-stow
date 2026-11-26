@@ -32,7 +32,7 @@ super + shift + {1-9,0}
     bspc node -d {1-9,10}
 # Vertical wheel and horizontal wheel: skip empty desktops on this monitor.
 super + {button4,button5,button6,button7}
-    python3 "$HOME/.config/bspwm/actions.py" scroll {prev,next,prev,next}
+    "$HOME/.config/bspwm/native.sh" scroll {prev,next,prev,next}
 
 # Hold Super to keep the Quickshell workspace switcher open; release to select.
 super + Tab

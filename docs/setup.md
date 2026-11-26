@@ -122,7 +122,9 @@ the command above alone does not satisfy these editor version requirements.
   There is no `helium` package in this machine's configured APT indexes.
 - **Rust environment:** `.bashrc` unconditionally sources `~/.cargo/env`.
   Install the Rust toolchain through rustup to create it, or guard/remove that
-  line if you do not use Rust. Adding a directory to `PATH` does not install it.
+  line if you do not use Rust. The optional native bspwm helpers use Cargo and
+  Rust 1.89 or newer. See the [bspwm guide](bspwm.md#start-the-session) for build
+  and cache details.
 - **Shell enhancements:** `eza` and `starship` are optional and checked before
   use. Install them if desired; `eza` is available from this machine's Ubuntu
   indexes, while Starship may need a separate upstream installation.

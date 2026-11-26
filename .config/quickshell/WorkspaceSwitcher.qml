@@ -50,7 +50,7 @@ FloatingWindow {
     onClosed: cancel()
 
     Process {
-        command: ["python3", Quickshell.shellPath("super-release.py")]
+        command: [Quickshell.shellPath("../bspwm/native.sh"), "super-release"]
         running: root.visible
         stdout: SplitParser { onRead: data => { if (data === "released") root.accept(); } }
         onExited: exitCode => { if (exitCode !== 0 && root.visible) root.cancel(); }

@@ -18,13 +18,18 @@ Install `bspwm`, `sxhkd`, and `x11-utils` in addition to the shared dependencies
 in [setup.md](setup.md). On this machine these packages and the display-manager
 session entry are already installed. The configs are linked at
 `~/.config/bspwm` and `~/.config/sxhkd`; a fresh clone can use the normal Stow
-instructions. `bspwmrc` and `rules.py` must retain their executable bits.
+instructions.
 
 Log out and select **bspwm** in the login screen's session selector. You can return
 to i3 through the same selector. There is no need to replace the running i3 WM
 or change your default login session to try it.
 
 `bspwmrc` applies appearance, pointer behavior, desktop initialization, and rules.
+It also starts a background build of the workspace wheel, window rules, and
+Super-release helpers when Cargo is available (Rust 1.89 or newer). The build
+installs the binaries under `${XDG_CACHE_HOME:-$HOME/.cache}/spectre-desktop-helpers`.
+The launcher uses the Python helpers until a build succeeds. To build ahead of
+login or see compiler diagnostics, run `~/.config/bspwm/native.sh build`.
 A session owner starts sxhkd, Picom from the Nix profile, Quickshell, xss-lock,
 network and KDE Connect applets, the policy agent, XDG autostarts, and wallpaper.
 A per-user/per-display lock prevents duplicate starts on config reload or WM
@@ -84,7 +89,7 @@ Repeated Tab advances; Super+Shift+Tab reverses. Release both Super keys to swit
 or press Escape to cancel without changing workspaces. Clicking a card selects
 it as well. A stationary pointer never changes the keyboard selection.
 
-The short-lived `super-release.py` helper observes X11 key state only while the
+The short-lived Super-release helper observes X11 key state only while the
 panel is open. It handles quick taps whose Super release happens before the
 asynchronous IPC call maps the window, without globally intercepting Super itself.
 The panel opens on the focused monitor, floats above applications, and does not

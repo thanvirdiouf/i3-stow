@@ -31,8 +31,10 @@ bspc config ignore_ewmh_struts true
 bspc config bottom_padding 0
 bspc config left_padding 0
 bspc config right_padding 0
-bspc config external_rules_command "$config_dir/rules.py"
+bspc config external_rules_command "$config_dir/native.sh"
 python3 "$config_dir/actions.py" desktops || exit 1
+# The launcher uses the Python helpers until the native build is available.
+"$config_dir/native.sh" build </dev/null >/dev/null 2>&1 &
 # Reloads only reapply settings. The session owner prevents duplicate daemons.
 if [ "${SPECTRE_BSPWM_TEST:-0}" != 1 ]; then
     python3 "$config_dir/session.py" >/dev/null 2>&1 &
